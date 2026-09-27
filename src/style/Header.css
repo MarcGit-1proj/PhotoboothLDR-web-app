@@ -1,0 +1,74 @@
+.photobooth-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 24px;
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(255, 182, 193, 0.3); /* Soft pink border */
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
+  width: 100%;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.camera-icon {
+  font-size: 1.5rem;
+}
+
+.photobooth-header h1 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #4a4a4a;
+  margin: 0;
+  font-family: 'Poppins', sans-serif, system-ui;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+}
+
+.connection-badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.connection-badge.online {
+  background-color: #e6f4ea;
+  color: #137333;
+  border: 1px solid #ceead6;
+}
+
+.connection-badge.offline {
+  background-color: #fce8e6;
+  color: #c5221f;
+  border: 1px solid #fad2cf;
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: currentColor;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% { opacity: 1; }
+  50% { opacity: 0.4; }
+  100% { opacity: 1; }
+}
