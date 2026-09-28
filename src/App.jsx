@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import './style/App.css';
 
 export default function App() {
-  const [peerId, setPeerId] = useState('');
+  const [peerId, setPeerId] = useState(() => Math.floor(1000 + Math.random() * 9000).toString());
   const [remotePeerId, setRemotePeerId] = useState('');
   const [isConnected, setIsConnected] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState('classic');
@@ -16,25 +16,25 @@ export default function App() {
   const localStreamRef = useRef(null);
 
   useEffect(() => {
-    const peer = new window.Peer({
+    const peer = new window.Peer(peerId, {
       host: '0.peerjs.com',
       port: 443,
       secure: true
     });
 
     peer.on('open', (id) => {
-      const shortCode = id.slice(-4).toUpperCase() || Math.floor(1000 + Math.random() * 9000).toString();
-      setPeerId(shortCode);
+      console.log('Peer connected with ID:', id);
       peerInstance.current = peer;
     });
 
-    const timer = setTimeout(() => {
-      if (!peerId) {
-        const fallbackCode = Math.floor(1000 + Math.random() * 9000).toString();
-        setPeerId(fallbackCode);
-        peerInstance.current = peer;
+    // Global peer error listener
+    peer.on('error', (err) => {
+      if (err.type === 'peer-unavailable') {
+        alert('Error: No ID generated matches this.');
+      } else {
+        console.error('Peer error:', err);
       }
-    }, 1500);
+    });
 
     peer.on('call', (call) => {
       if (localStreamRef.current) {
@@ -77,7 +77,6 @@ export default function App() {
       });
 
     return () => {
-      clearTimeout(timer);
       if (peerInstance.current) {
         peerInstance.current.destroy();
       }
@@ -87,19 +86,48 @@ export default function App() {
   const callPartner = (remoteId) => {
     if (!peerInstance.current) return;
     
+    const trimmedId = remoteId.trim();
+    if (!trimmedId) {
+      alert('Please enter a partner code.');
+      return;
+    }
+
+    if (trimmedId === peerId) {
+      alert('You cannot connect to your own code!');
+      return;
+    }
+
     const stream = localStreamRef.current;
     if (!stream) {
       alert('Local video stream not ready yet.');
       return;
     }
 
-    const call = peerInstance.current.call(remoteId, stream);
-    call.on('stream', (remoteStream) => {
-      if (remoteVideoRef.current) {
-        remoteVideoRef.current.srcObject = remoteStream;
+    console.log(`Calling partner ID: ${trimmedId}`);
+    const call = peerInstance.current.call(trimmedId, stream);
+    
+    if (call) {
+      call.on('stream', (remoteStream) => {
+        if (remoteVideoRef.current) {
+          remoteVideoRef.current.srcObject = remoteStream;
+        }
+        setIsConnected(true);
+      });
+
+      // Catch errors directly tied to the outgoing call/peer unavailability
+      call.on('error', (err) => {
+        console.error('Call connection error:', err);
+        alert('Error: No ID generated matches this.');
+      });
+    }
+
+    // Fallback timer incognito check if peer doesn't exist via signaling server response delay
+    setTimeout(() => {
+      if (!isConnected) {
+        // Optional safety check helper message if it hangs too long without connection
+        console.log('Connection attempt timed out or target peer does not exist.');
       }
-      setIsConnected(true);
-    });
+    }, 4000);
   };
 
   const copyShareableLink = () => {
@@ -209,7 +237,7 @@ export default function App() {
         <div className="panel connection-panel">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
             <p className="peer-id-text" style={{ margin: 0 }}>
-              Your Code: <strong className="peer-id-highlight">{peerId || 'Loading...'}</strong>
+              Your Code: <strong className="peer-id-highlight">{peerId}</strong>
             </p>
             {peerId && (
               <button 
@@ -256,7 +284,7 @@ export default function App() {
 
         {/* Template & Capture Panel */}
         <div className="panel">
-          <h3 style={{ margin: '0 0 16px 0', fontSize: '1.1rem', color: '#374151' }}>Select Theme</h3>
+          <h3 style={{ margin: '0 0 16px 0', fontSize: '1.1rem', color: '#f3f4f6' }}>Select Theme</h3>
           
           <div className="template-buttons">
             <button 
@@ -289,7 +317,7 @@ export default function App() {
         {/* Snapshot Result Section */}
         {snapshot && (
           <div className="panel">
-            <h3 style={{ margin: '0 0 12px 0', fontSize: '1.2rem', color: '#374151' }}>Preview</h3>
+            <h3 style={{ margin: '0 0 12px 0', fontSize: '1.2rem', color: '#f3f4f6' }}>Preview</h3>
             <div className="result-image-box">
               <img src={snapshot} alt="Template Preview" className="result-img" />
             </div>
