@@ -1,192 +1,307 @@
 import React, { useState, useEffect, useRef } from 'react';
+import './style/App.css';
 
 export default function App() {
   const [peerId, setPeerId] = useState('');
   const [remotePeerId, setRemotePeerId] = useState('');
   const [isConnected, setIsConnected] = useState(false);
-  const [selectedFrame, setSelectedFrame] = useState('heart'); // Default frame
+  const [selectedTemplate, setSelectedTemplate] = useState('classic');
   const [snapshot, setSnapshot] = useState(null);
+  const [isCapturing, setIsCapturing] = useState(false);
   
   const peerInstance = useRef(null);
   const localVideoRef = useRef(null);
   const remoteVideoRef = useRef(null);
   const canvasRef = useRef(null);
+  const localStreamRef = useRef(null);
 
   useEffect(() => {
-    const peer = new window.Peer();
+    const peer = new window.Peer({
+      host: '0.peerjs.com',
+      port: 443,
+      secure: true
+    });
 
     peer.on('open', (id) => {
-      setPeerId(id);
+      const shortCode = id.slice(-4).toUpperCase() || Math.floor(1000 + Math.random() * 9000).toString();
+      setPeerId(shortCode);
+      peerInstance.current = peer;
     });
+
+    const timer = setTimeout(() => {
+      if (!peerId) {
+        const fallbackCode = Math.floor(1000 + Math.random() * 9000).toString();
+        setPeerId(fallbackCode);
+        peerInstance.current = peer;
+      }
+    }, 1500);
 
     peer.on('call', (call) => {
-      navigator.mediaDevices.getUserMedia({ video: true, audio: true })
-        .then((stream) => {
-          if (localVideoRef.current) {
-            localVideoRef.current.srcObject = stream;
-          }
+      if (localStreamRef.current) {
+        call.answer(localStreamRef.current);
+      } else {
+        navigator.mediaDevices.getUserMedia({ video: true, audio: true }).then((stream) => {
+          localStreamRef.current = stream;
+          if (localVideoRef.current) localVideoRef.current.srcObject = stream;
           call.answer(stream);
-          call.on('stream', (remoteStream) => {
-            if (remoteVideoRef.current) {
-              remoteVideoRef.current.srcObject = remoteStream;
-            }
-            setIsConnected(true);
-          });
-        })
-        .catch((err) => console.error('Failed to get local stream', err));
+        });
+      }
+
+      call.on('stream', (remoteStream) => {
+        if (remoteVideoRef.current) {
+          remoteVideoRef.current.srcObject = remoteStream;
+        }
+        setIsConnected(true);
+      });
     });
 
-    peerInstance.current = peer;
-  }, []);
-
-  const callPartner = (remoteId) => {
     navigator.mediaDevices.getUserMedia({ video: true, audio: true })
       .then((stream) => {
+        localStreamRef.current = stream;
         if (localVideoRef.current) {
           localVideoRef.current.srcObject = stream;
         }
 
-        const call = peerInstance.current.call(remoteId, stream);
-        call.on('stream', (remoteStream) => {
-          if (remoteVideoRef.current) {
-            remoteVideoRef.current.srcObject = remoteStream;
-          }
-          setIsConnected(true);
-        });
+        const urlParams = new URLSearchParams(window.location.search);
+        const connectTo = urlParams.get('connect');
+        if (connectTo) {
+          setRemotePeerId(connectTo);
+          setTimeout(() => {
+            callPartner(connectTo);
+          }, 1500);
+        }
       })
-      .catch((err) => console.error('Failed to get local stream', err));
+      .catch((err) => {
+        console.error('Camera permission error:', err);
+        alert('Please allow camera and microphone access.');
+      });
+
+    return () => {
+      clearTimeout(timer);
+      if (peerInstance.current) {
+        peerInstance.current.destroy();
+      }
+    };
+  }, []);
+
+  const callPartner = (remoteId) => {
+    if (!peerInstance.current) return;
+    
+    const stream = localStreamRef.current;
+    if (!stream) {
+      alert('Local video stream not ready yet.');
+      return;
+    }
+
+    const call = peerInstance.current.call(remoteId, stream);
+    call.on('stream', (remoteStream) => {
+      if (remoteVideoRef.current) {
+        remoteVideoRef.current.srcObject = remoteStream;
+      }
+      setIsConnected(true);
+    });
   };
 
-  // Function to take a photo snapshot
+  const copyShareableLink = () => {
+    const shareLink = `${window.location.origin}${window.location.pathname}?connect=${peerId}`;
+    navigator.clipboard.writeText(shareLink);
+    alert('Link copied to clipboard.');
+  };
+
   const takeSnapshot = () => {
     const canvas = canvasRef.current;
-    const context = canvas.getContext('2d');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
     
-    // Set canvas dimensions
-    canvas.width = 640;
-    canvas.height = 480;
+    setIsCapturing(true);
+    setTimeout(() => setIsCapturing(false), 500);
 
-    // Draw local video (left side)
-    if (localVideoRef.current) {
-      context.save();
-      context.scale(-1, 1);
-      context.drawImage(localVideoRef.current, -320, 0, 320, 480);
-      context.restore();
+    canvas.width = 600;
+    canvas.height = 800;
+
+    if (selectedTemplate === 'romantic') {
+      ctx.fillStyle = '#2b0914';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 36px system-ui, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('Date Night', canvas.width / 2, 55);
+
+      ctx.font = '500 14px system-ui, sans-serif';
+      ctx.fillStyle = '#ff758c';
+      ctx.fillText('LDR MEMORIES • TOGETHER APART', canvas.width / 2, 82);
+    } else if (selectedTemplate === 'neon') {
+      ctx.fillStyle = '#09090b';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      ctx.fillStyle = '#00f5d4';
+      ctx.font = 'bold 36px system-ui, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('NEON VIBES', canvas.width / 2, 55);
+
+      ctx.font = '500 14px system-ui, sans-serif';
+      ctx.fillStyle = '#7209b7';
+      ctx.fillText('CYBER LOVERS • 2026', canvas.width / 2, 82);
+    } else {
+      ctx.fillStyle = '#faf9f6';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      ctx.fillStyle = '#1f2937';
+      ctx.font = 'bold 36px system-ui, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('Our Snapshot', canvas.width / 2, 55);
+
+      ctx.font = '500 14px system-ui, sans-serif';
+      ctx.fillStyle = '#9ca3af';
+      ctx.fillText('CLASSIC STRIP • FOREVER US', canvas.width / 2, 82);
     }
 
-    // Draw remote video (right side)
-    if (remoteVideoRef.current) {
-      context.drawImage(remoteVideoRef.current, 320, 0, 320, 480);
-    }
+    const drawFrame = (videoEl, x, y, w, h, isMirrored = false) => {
+      if (!videoEl) return;
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.fillStyle = '#111';
+      ctx.fillRect(0, 0, w, h);
+      
+      if (isMirrored) {
+        ctx.scale(-1, 1);
+        ctx.drawImage(videoEl, -w, 0, w, h);
+      } else {
+        ctx.drawImage(videoEl, 0, 0, w, h);
+      }
+      ctx.restore();
+    };
 
-    // Draw custom frame overlay based on selection
-    context.lineWidth = 15;
-    if (selectedFrame === 'heart') {
-      context.strokeStyle = '#ff4d6d';
-    } else if (selectedFrame === 'vintage') {
-      context.strokeStyle = '#d4a373';
-    } else if (selectedFrame === 'neon') {
-      context.strokeStyle = '#00f5d4';
-    }
-    context.strokeRect(0, 0, canvas.width, canvas.height);
+    drawFrame(localVideoRef.current, 50, 110, 230, 280, true);
+    drawFrame(remoteVideoRef.current, 320, 110, 230, 280, false);
+    drawFrame(localVideoRef.current, 50, 410, 230, 280, true);
+    drawFrame(remoteVideoRef.current, 320, 410, 230, 280, false);
 
-    // Save image URL
+    ctx.fillStyle = selectedTemplate === 'classic' ? '#6b7280' : '#ff758c';
+    ctx.font = 'bold 13px system-ui, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('MADE WITH LOVE • LDR PHOTOHOOTH', canvas.width / 2, 745);
+
     const imageURL = canvas.toDataURL('image/png');
     setSnapshot(imageURL);
   };
 
   return (
-    <div style={{ fontFamily: 'sans-serif', padding: '20px', background: '#fdf2f4', minHeight: '100vh', maxWidth: '900px', margin: '0 auto' }}>
-      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', background: 'white', padding: '15px 20px', borderRadius: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.05)' }}>
-        <h2 style={{ margin: 0, color: '#333' }}>📸 LDR Photobooth</h2>
-        <span style={{ padding: '6px 14px', borderRadius: '20px', background: isConnected ? '#e6f4ea' : '#fce8e6', color: isConnected ? '#137333' : '#c5221f', fontWeight: 'bold', fontSize: '0.9rem' }}>
-          {isConnected ? '🟢 Connected' : '🔴 Not Connected'}
-        </span>
-      </header>
+    <div className="app-container">
+      {isCapturing && <div className="flash-overlay" />}
 
-      {/* Connection Panel */}
-      <div style={{ background: 'white', padding: '20px', borderRadius: '12px', marginBottom: '20px', boxShadow: '0 2px 8px rgba(0,0,0,0.05)' }}>
-        <p style={{ margin: '0 0 10px 0' }}><strong>Your Peer ID:</strong> <span style={{ color: '#0077b6' }}>{peerId || 'Loading...'}</span></p>
-        <div style={{ display: 'flex', gap: '10px' }}>
-          <input 
-            type="text" 
-            placeholder="Enter partner's Peer ID here" 
-            value={remotePeerId} 
-            onChange={(e) => setRemotePeerId(e.target.value)}
-            style={{ padding: '10px', borderRadius: '8px', border: '1px solid #ccc', flex: 1, outline: 'none' }}
-          />
-          <button 
-            onClick={() => callPartner(remotePeerId)}
-            style={{ padding: '10px 20px', background: '#ff758c', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}
-          >
-            Connect / Call
-          </button>
-        </div>
-      </div>
-
-      {/* Video Streams Display */}
-      <div style={{ display: 'flex', gap: '20px', justifyContent: 'center', flexWrap: 'wrap', marginBottom: '20px' }}>
-        <div style={{ textAlign: 'center', background: 'white', padding: '15px', borderRadius: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.05)' }}>
-          <h4 style={{ margin: '0 0 10px 0', color: '#555' }}>You</h4>
-          <video ref={localVideoRef} autoPlay playsInline muted style={{ width: '300px', height: '225px', background: '#000', borderRadius: '8px', transform: 'scaleX(-1)', objectFit: 'cover' }} />
-        </div>
-        <div style={{ textAlign: 'center', background: 'white', padding: '15px', borderRadius: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.05)' }}>
-          <h4 style={{ margin: '0 0 10px 0', color: '#555' }}>Partner</h4>
-          <video ref={remoteVideoRef} autoPlay playsInline style={{ width: '300px', height: '225px', background: '#000', borderRadius: '8px', objectFit: 'cover' }} />
-        </div>
-      </div>
-
-      {/* Frame Customization & Capture Panel */}
-      <div style={{ background: 'white', padding: '20px', borderRadius: '12px', textAlign: 'center', boxShadow: '0 2px 8px rgba(0,0,0,0.05)' }}>
-        <h3 style={{ margin: '0 0 15px 0', color: '#333' }}>Choose Custom Frame</h3>
-        <div style={{ display: 'flex', justifyContent: 'center', gap: '15px', marginBottom: '20px' }}>
-          <button 
-            onClick={() => setSelectedFrame('heart')}
-            style={{ padding: '8px 16px', borderRadius: '20px', border: selectedFrame === 'heart' ? '2px solid #ff4d6d' : '1px solid #ccc', background: selectedFrame === 'heart' ? '#ffe5ec' : 'white', cursor: 'pointer', fontWeight: 'bold' }}
-          >
-            💖 Sweet Heart
-          </button>
-          <button 
-            onClick={() => setSelectedFrame('vintage')}
-            style={{ padding: '8px 16px', borderRadius: '20px', border: selectedFrame === 'vintage' ? '2px solid #d4a373' : '1px solid #ccc', background: selectedFrame === 'vintage' ? '#fefae0' : 'white', cursor: 'pointer', fontWeight: 'bold' }}
-          >
-            📜 Vintage Warm
-          </button>
-          <button 
-            onClick={() => setSelectedFrame('neon')}
-            style={{ padding: '8px 16px', borderRadius: '20px', border: selectedFrame === 'neon' ? '2px solid #00f5d4' : '1px solid #ccc', background: selectedFrame === 'neon' ? '#e0fbfc' : 'white', cursor: 'pointer', fontWeight: 'bold' }}
-          >
-            ✨ Neon Glow
-          </button>
-        </div>
-
-        <button 
-          onClick={takeSnapshot}
-          style={{ padding: '12px 30px', background: '#ff758c', color: 'white', border: 'none', borderRadius: '8px', fontSize: '1rem', cursor: 'pointer', fontWeight: 'bold', boxShadow: '0 4px 10px rgba(255, 117, 140, 0.3)' }}
-        >
-          📷 Take Snapshot
-        </button>
-      </div>
-
-      {/* Hidden Canvas for Processing */}
-      <canvas ref={canvasRef} style={{ display: 'none' }} />
-
-      {/* Snapshot Preview Result */}
-      {snapshot && (
-        <div style={{ marginTop: '20px', background: 'white', padding: '20px', borderRadius: '12px', textAlign: 'center', boxShadow: '0 2px 8px rgba(0,0,0,0.05)' }}>
-          <h3 style={{ margin: '0 0 10px 0', color: '#333' }}>Your Captured Moment</h3>
-          <img src={snapshot} alt="Snapshot Preview" style={{ maxWidth: '100%', borderRadius: '8px', border: '1px solid #ddd', marginBottom: '15px' }} />
+      <div className="max-width-wrapper">
+        
+        {/* Header */}
+        <header className="app-header">
           <div>
-            <a 
-              href={snapshot} 
-              download="ldr-photobooth.png"
-              style={{ display: 'inline-block', padding: '10px 20px', background: '#2b9348', color: 'white', textDecoration: 'none', borderRadius: '8px', fontWeight: 'bold' }}
-            >
-              Download Photo
-            </a>
+            <h2 className="app-title">LDR Photobooth</h2>
+            <p className="app-subtitle">Capture memories across the distance</p>
+          </div>
+          <div className={`status-badge ${isConnected ? 'connected' : 'disconnected'}`}>
+            <span className={`status-dot ${isConnected ? 'connected' : 'disconnected'}`}></span>
+            <span>{isConnected ? 'Connected' : 'Waiting...'}</span>
+          </div>
+        </header>
+
+        {/* Connection Panel */}
+        <div className="panel connection-panel">
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
+            <p className="peer-id-text" style={{ margin: 0 }}>
+              Your Code: <strong className="peer-id-highlight">{peerId || 'Loading...'}</strong>
+            </p>
+            {peerId && (
+              <button 
+                onClick={copyShareableLink} 
+                style={{ padding: '6px 12px', fontSize: '0.85rem', background: '#fee2e2', border: '1px solid #fecaca', color: '#991b1b', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}
+              >
+                Copy Invite Link
+              </button>
+            )}
+          </div>
+          
+          <div className="connection-form">
+            <input 
+              type="text" 
+              className="peer-input"
+              placeholder="Paste partner's code here..." 
+              value={remotePeerId} 
+              onChange={(e) => setRemotePeerId(e.target.value)}
+            />
+            <button className="btn-primary" onClick={() => callPartner(remotePeerId)}>
+              Connect
+            </button>
           </div>
         </div>
-      )}
+
+        {/* Video Streams Grid */}
+        <div className="video-grid">
+          <div className="video-card">
+            <div className="video-header">
+              <h4 className="video-title">You</h4>
+              <span className="tag-mirror">Mirror</span>
+            </div>
+            <video ref={localVideoRef} autoPlay playsInline muted className="mirrored" />
+          </div>
+
+          <div className="video-card">
+            <div className="video-header">
+              <h4 className="video-title">Partner</h4>
+              <span className="tag-live">Live</span>
+            </div>
+            <video ref={remoteVideoRef} autoPlay playsInline />
+          </div>
+        </div>
+
+        {/* Template & Capture Panel */}
+        <div className="panel">
+          <h3 style={{ margin: '0 0 16px 0', fontSize: '1.1rem', color: '#374151' }}>Select Theme</h3>
+          
+          <div className="template-buttons">
+            <button 
+              onClick={() => setSelectedTemplate('classic')}
+              className={`template-btn classic ${selectedTemplate === 'classic' ? 'active' : ''}`}
+            >
+              Classic White
+            </button>
+            <button 
+              onClick={() => setSelectedTemplate('romantic')}
+              className={`template-btn romantic ${selectedTemplate === 'romantic' ? 'active' : ''}`}
+            >
+              Date Night
+            </button>
+            <button 
+              onClick={() => setSelectedTemplate('neon')}
+              className={`template-btn neon ${selectedTemplate === 'neon' ? 'active' : ''}`}
+            >
+              Neon Glow
+            </button>
+          </div>
+
+          <button className="btn-capture" onClick={takeSnapshot}>
+            Capture Photo Strip
+          </button>
+        </div>
+
+        <canvas ref={canvasRef} style={{ display: 'none' }} />
+
+        {/* Snapshot Result Section */}
+        {snapshot && (
+          <div className="panel">
+            <h3 style={{ margin: '0 0 12px 0', fontSize: '1.2rem', color: '#374151' }}>Preview</h3>
+            <div className="result-image-box">
+              <img src={snapshot} alt="Template Preview" className="result-img" />
+            </div>
+            <div>
+              <a href={snapshot} download="ldr-photostrip.png" className="btn-download">
+                Download Photo Strip
+              </a>
+            </div>
+          </div>
+        )}
+
+      </div>
     </div>
   );
 }
