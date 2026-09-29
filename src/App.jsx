@@ -6,6 +6,8 @@ export default function App() {
   const [remotePeerId, setRemotePeerId] = useState('');
   const [isConnected, setIsConnected] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState('classic');
+  const [boxCount, setBoxCount] = useState(4);
+  const [customText, setCustomText] = useState('You ♥ Me'); // State para sa custom text na pwede mong baguhin
   const [snapshot, setSnapshot] = useState(null);
   const [isCapturing, setIsCapturing] = useState(false);
   
@@ -27,7 +29,6 @@ export default function App() {
       peerInstance.current = peer;
     });
 
-    // Global peer error listener
     peer.on('error', (err) => {
       if (err.type === 'peer-unavailable') {
         alert('Error: No ID generated matches this.');
@@ -114,17 +115,14 @@ export default function App() {
         setIsConnected(true);
       });
 
-      // Catch errors directly tied to the outgoing call/peer unavailability
       call.on('error', (err) => {
         console.error('Call connection error:', err);
         alert('Error: No ID generated matches this.');
       });
     }
 
-    // Fallback timer incognito check if peer doesn't exist via signaling server response delay
     setTimeout(() => {
       if (!isConnected) {
-        // Optional safety check helper message if it hangs too long without connection
         console.log('Connection attempt timed out or target peer does not exist.');
       }
     }, 4000);
@@ -136,53 +134,25 @@ export default function App() {
     alert('Link copied to clipboard.');
   };
 
-  const takeSnapshot = () => {
+  // Function para i-generate ang canvas (pwede i-call ulit kung babaguhin ang custom text)
+  const generateCanvasImage = (textInput) => {
     const canvas = canvasRef.current;
-    if (!canvas) return;
+    if (!canvas) return null;
     const ctx = canvas.getContext('2d');
     
-    setIsCapturing(true);
-    setTimeout(() => setIsCapturing(false), 500);
-
     canvas.width = 600;
-    canvas.height = 800;
+    canvas.height = boxCount === 2 ? 620 : boxCount === 3 ? 740 : 860;
 
+    // Background styling depende sa template (Walang mabigat na text, minimalist/design lang)
     if (selectedTemplate === 'romantic') {
       ctx.fillStyle = '#2b0914';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-      ctx.fillStyle = '#ffffff';
-      ctx.font = 'bold 36px system-ui, sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillText('Date Night', canvas.width / 2, 55);
-
-      ctx.font = '500 14px system-ui, sans-serif';
-      ctx.fillStyle = '#ff758c';
-      ctx.fillText('LDR MEMORIES • TOGETHER APART', canvas.width / 2, 82);
     } else if (selectedTemplate === 'neon') {
       ctx.fillStyle = '#09090b';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-      ctx.fillStyle = '#00f5d4';
-      ctx.font = 'bold 36px system-ui, sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillText('NEON VIBES', canvas.width / 2, 55);
-
-      ctx.font = '500 14px system-ui, sans-serif';
-      ctx.fillStyle = '#7209b7';
-      ctx.fillText('CYBER LOVERS • 2026', canvas.width / 2, 82);
     } else {
       ctx.fillStyle = '#faf9f6';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-      ctx.fillStyle = '#1f2937';
-      ctx.font = 'bold 36px system-ui, sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillText('Our Snapshot', canvas.width / 2, 55);
-
-      ctx.font = '500 14px system-ui, sans-serif';
-      ctx.fillStyle = '#9ca3af';
-      ctx.fillText('CLASSIC STRIP • FOREVER US', canvas.width / 2, 82);
     }
 
     const drawFrame = (videoEl, x, y, w, h, isMirrored = false) => {
@@ -201,18 +171,41 @@ export default function App() {
       ctx.restore();
     };
 
-    drawFrame(localVideoRef.current, 50, 110, 230, 280, true);
-    drawFrame(remoteVideoRef.current, 320, 110, 230, 280, false);
-    drawFrame(localVideoRef.current, 50, 410, 230, 280, true);
-    drawFrame(remoteVideoRef.current, 320, 410, 230, 280, false);
+    const startY = 40;
+    const boxHeight = boxCount === 2 ? 240 : boxCount === 3 ? 180 : 145;
+    const spacing = 15;
 
-    ctx.fillStyle = selectedTemplate === 'classic' ? '#6b7280' : '#ff758c';
-    ctx.font = 'bold 13px system-ui, sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillText('MADE WITH LOVE • LDR PHOTOHOOTH', canvas.width / 2, 745);
+    for (let i = 0; i < boxCount; i++) {
+      const currentY = startY + i * (boxHeight + spacing);
+      drawFrame(localVideoRef.current, 50, currentY, 230, boxHeight, true);
+      drawFrame(remoteVideoRef.current, 320, currentY, 230, boxHeight, false);
+    }
 
-    const imageURL = canvas.toDataURL('image/png');
+    // Ilagay ang custom text o design sa ilalim ng mga boxes kung meron man
+    if (textInput) {
+      ctx.fillStyle = selectedTemplate === 'classic' ? '#1f2937' : '#ff758c';
+      ctx.font = 'bold 24px system-ui, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(textInput, canvas.width / 2, canvas.height - 25);
+    }
+
+    return canvas.toDataURL('image/png');
+  };
+
+  const takeSnapshot = () => {
+    setIsCapturing(true);
+    setTimeout(() => setIsCapturing(false), 500);
+
+    const imageURL = generateCanvasImage(customText);
     setSnapshot(imageURL);
+  };
+
+  // Kapag binago ang text habang nasa preview modal, i-update natin agad ang image
+  const handleCustomTextChange = (e) => {
+    const newText = e.target.value;
+    setCustomText(newText);
+    const updatedURL = generateCanvasImage(newText);
+    setSnapshot(updatedURL);
   };
 
   return (
@@ -282,10 +275,31 @@ export default function App() {
           </div>
         </div>
 
-        {/* Template & Capture Panel */}
+        {/* Template & Layout Selection Panel */}
         <div className="panel">
-          <h3 style={{ margin: '0 0 16px 0', fontSize: '1.1rem', color: '#f3f4f6' }}>Select Theme</h3>
-          
+          <h3 style={{ margin: '0 0 12px 0', fontSize: '1.1rem', color: '#f3f4f6' }}>Select Layout (Boxes)</h3>
+          <div className="template-buttons" style={{ marginBottom: '20px' }}>
+            <button 
+              onClick={() => setBoxCount(2)}
+              className={`template-btn classic ${boxCount === 2 ? 'active' : ''}`}
+            >
+              2 Frames
+            </button>
+            <button 
+              onClick={() => setBoxCount(3)}
+              className={`template-btn classic ${boxCount === 3 ? 'active' : ''}`}
+            >
+              3 Frames
+            </button>
+            <button 
+              onClick={() => setBoxCount(4)}
+              className={`template-btn classic ${boxCount === 4 ? 'active' : ''}`}
+            >
+              4 Frames
+            </button>
+          </div>
+
+          <h3 style={{ margin: '0 0 12px 0', fontSize: '1.1rem', color: '#f3f4f6' }}>Select Theme</h3>
           <div className="template-buttons">
             <button 
               onClick={() => setSelectedTemplate('classic')}
@@ -307,24 +321,54 @@ export default function App() {
             </button>
           </div>
 
-          <button className="btn-capture" onClick={takeSnapshot}>
+          <button className="btn-capture" onClick={takeSnapshot} style={{ marginTop: '10px' }}>
             Capture Photo Strip
           </button>
         </div>
 
         <canvas ref={canvasRef} style={{ display: 'none' }} />
 
-        {/* Snapshot Result Section */}
+        {/* Pop-up Modal Preview with Custom Text Input */}
         {snapshot && (
-          <div className="panel">
-            <h3 style={{ margin: '0 0 12px 0', fontSize: '1.2rem', color: '#f3f4f6' }}>Preview</h3>
-            <div className="result-image-box">
-              <img src={snapshot} alt="Template Preview" className="result-img" />
-            </div>
-            <div>
-              <a href={snapshot} download="ldr-photostrip.png" className="btn-download">
-                Download Photo Strip
-              </a>
+          <div className="modal-overlay">
+            <div className="modal-content">
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                <h3 style={{ margin: 0, fontSize: '1.2rem', color: '#f3f4f6' }}>Customize & Preview</h3>
+                <button 
+                  onClick={() => setSnapshot(null)}
+                  style={{ background: 'transparent', border: 'none', color: '#9ca3af', fontSize: '1.5rem', cursor: 'pointer' }}
+                >
+                  &times;
+                </button>
+              </div>
+
+              {/* Input field para ma-customize ang text sa ilalim bago i-download */}
+              <div style={{ marginBottom: '12px', textAlign: 'left' }}>
+                <label style={{ fontSize: '0.85rem', color: '#9ca3af', display: 'block', marginBottom: '4px' }}>Custom Bottom Text:</label>
+                <input 
+                  type="text" 
+                  value={customText} 
+                  onChange={handleCustomTextChange}
+                  placeholder="I-type ang mensahe o pangalan dito..."
+                  className="peer-input"
+                  style={{ width: '100%', fontSize: '0.9rem', padding: '8px 12px' }}
+                />
+              </div>
+
+              <div className="result-image-box" style={{ marginBottom: '16px' }}>
+                <img src={snapshot} alt="Template Preview" className="result-img" />
+              </div>
+              <div style={{ display: 'flex', gap: '10px' }}>
+                <a href={snapshot} download="ldr-photostrip.png" className="btn-download" style={{ flex: 1, textAlign: 'center', textDecoration: 'none' }}>
+                  Download Photo Strip
+                </a>
+                <button 
+                  onClick={() => setSnapshot(null)} 
+                  style={{ padding: '10px 16px', background: '#374151', color: '#fff', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}
+                >
+                  Close
+                </button>
+              </div>
             </div>
           </div>
         )}
