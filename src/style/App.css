@@ -9,9 +9,9 @@ body {
 
 .app-container {
   padding: 24px 16px;
-  background: #121212; /* Itim na background */
+  background: #121212;
   min-height: 100vh;
-  color: #f3f4f6; /* Liwanag ng text para madaling mabasa */
+  color: #f3f4f6;
 }
 
 .max-width-wrapper {
@@ -30,13 +30,39 @@ body {
   transition: opacity 0.3s ease;
 }
 
+/* Countdown Overlay */
+.countdown-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(4px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9998;
+}
+
+.countdown-number {
+  font-size: 8rem;
+  font-weight: 900;
+  color: #ef4444;
+  text-shadow: 0 0 30px rgba(239, 68, 68, 0.6);
+  animation: popScale 1s infinite ease-in-out;
+}
+
+@keyframes popScale {
+  0% { transform: scale(0.8); opacity: 0.5; }
+  50% { transform: scale(1.1); opacity: 1; }
+  100% { transform: scale(0.8); opacity: 0.5; }
+}
+
 /* Header */
 .app-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 24px;
-  background: rgba(24, 24, 27, 0.9); /* Dark semi-transparent */
+  background: rgba(24, 24, 27, 0.9);
   backdrop-filter: blur(8px);
   padding: 16px 24px;
   border-radius: 16px;
@@ -58,6 +84,92 @@ body {
   margin: 2px 0 0 0;
   font-size: 0.85rem;
   color: #fca5a5;
+}
+
+/* Hamburger Menu Button Styles[cite: 4] */
+.hamburger-btn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  width: 28px;
+  height: 20px;
+  padding: 0;
+}
+
+.hamburger-btn span {
+  width: 100%;
+  height: 2.5px;
+  background-color: #ef4444;
+  border-radius: 2px;
+  transition: all 0.3s ease;
+}
+
+/* Hamburger Menu Dropdown / Modal Styles[cite: 5] */
+.menu-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  z-index: 1000;
+  display: flex;
+  justify-content: flex-end;
+  align-items: flex-start;
+  padding: 20px;
+}
+
+.menu-box {
+  background: #141416;
+  border: 1px solid #27272a;
+  border-radius: 16px;
+  width: 220px;
+  padding: 20px 16px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.8);
+  position: relative;
+  animation: slideDown 0.2s ease-in-out;
+}
+
+.menu-close-btn {
+  position: absolute;
+  top: 12px;
+  right: 14px;
+  background: transparent;
+  border: none;
+  color: #ef4444;
+  font-size: 1.5rem;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.menu-list {
+  list-style: none;
+  padding: 0;
+  margin: 25px 0 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.menu-list li {
+  padding: 10px 14px;
+  color: #f3f4f6;
+  font-size: 1rem;
+  font-weight: 500;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+
+.menu-list li:hover {
+  background: #1f1f23;
+  color: #ef4444;
+}
+
+@keyframes slideDown {
+  from { transform: translateY(-10px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
 }
 
 .status-badge {
@@ -94,7 +206,7 @@ body {
 
 /* Panels */
 .panel {
-  background: #18181b; /* Madilim na kulay para sa mga box/card */
+  background: #18181b;
   padding: 24px;
   border-radius: 16px;
   margin-bottom: 24px;
@@ -325,10 +437,6 @@ video.mirrored {
   border-radius: 8px;
 }
 
-/* ==========================================
-   ADDED / MIGRATED STYLES FOR CLEAN CLASSNAMES
-   ========================================== */
-
 .connection-top-row {
   display: flex;
   justify-content: space-between;
@@ -364,6 +472,100 @@ video.mirrored {
 
 .hidden-canvas {
   display: none;
+}
+
+/* RchedS Modal Layout Match */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(8px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  animation: fadeIn 0.2s ease-in-out;
+}
+
+.style-modal-box {
+  background: #141416;
+  border: 1px solid #27272a;
+  border-radius: 20px;
+  padding: 32px 24px;
+  max-width: 440px;
+  width: 90%;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.9);
+  text-align: center;
+  animation: scaleUp 0.2s ease-in-out;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.modal-icon-header {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+
+.modal-svg-icon {
+  width: 36px;
+  height: 36px;
+  stroke: #ef4444;
+}
+
+.modal-main-heading {
+  margin: 0 0 16px 0;
+  font-size: 1.25rem;
+  font-weight: 800;
+  letter-spacing: 1px;
+  color: #f3f4f6;
+}
+
+.modal-body-text {
+  color: #9ca3af;
+  font-size: 0.92rem;
+  line-height: 1.6;
+  text-align: left;
+  margin-bottom: 24px;
+}
+
+.modal-body-text p {
+  margin: 0 0 12px 0;
+}
+
+.modal-body-text strong {
+  color: #f3f4f6;
+}
+
+.contact-info-block {
+  margin-top: 12px;
+  background: #1a1a1e;
+  padding: 12px 16px;
+  border-radius: 10px;
+  border: 1px solid #27272a;
+}
+
+.modal-actions-single {
+  display: flex;
+  justify-content: center;
+}
+
+.btn-modal-close-dark {
+  width: 100%;
+  padding: 12px;
+  background: #1c1c21;
+  color: #f3f4f6;
+  border: 1px solid #32323b;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.btn-modal-close-dark:hover {
+  background: #27272d;
+  border-color: #ef4444;
 }
 
 .modal-header-row {
@@ -412,55 +614,12 @@ video.mirrored {
 
 .btn-modal-close-secondary {
   padding: 10px 16px;
-  background: #718098;
-  color: #fff;
-  border: none;
-  border-radius: 8px;
+  background: #27272a;
+  color: #f3f4f6;
+  border: 1px solid #3f3f46;
+  border-radius: 10px;
   cursor: pointer;
   font-weight: bold;
-}
-
-/* Modal Pop-up Styles (Themed) */
-.modal-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.8);
-  backdrop-filter: blur(8px);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
-  animation: fadeIn 0.2s ease-in-out;
-}
-
-.modal-content {
-  background: #18181b;
-  padding: 24px;
-  border-radius: 16px;
-  border: 1px solid #27272a;
-  max-width: 450px;
-  width: 90%;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.7);
-  animation: scaleUp 0.2s ease-in-out;
-  max-height: 90vh;
-  overflow-y: auto;
-  text-align: center;
-}
-
-.modal-content .result-image-box {
-  max-height: 60vh;
-  display: flex;
-  justify-content: center;
-  background: #121212;
-  width: 100%;
-}
-
-.modal-content .result-img {
-  max-width: 100%;
-  max-height: 50vh;
-  width: auto;
-  object-fit: contain;
-  border-radius: 8px;
 }
 
 @keyframes fadeIn {
