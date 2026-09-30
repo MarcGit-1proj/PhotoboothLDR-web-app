@@ -364,7 +364,7 @@ export default function App() {
                 </a>
                 <button 
                   onClick={() => setSnapshot(null)} 
-                  style={{ padding: '10px 16px', background: '#374151', color: '#fff', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}
+                  style={{ padding: '10px 16px', background: '#718098', color: '#fff', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}
                 >
                   Close
                 </button>

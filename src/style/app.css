@@ -110,6 +110,7 @@ body {
 .peer-id-text {
   font-size: 0.95rem;
   color: #d1d5db;
+  margin: 0;
 }
 
 .peer-id-highlight {
@@ -190,6 +191,8 @@ body {
   font-weight: bold;
   font-size: 0.95rem;
   box-shadow: 0 4px 12px rgba(153, 27, 27, 0.3);
+  flex: 1;
+  text-align: center;
 }
 
 .btn-download:hover {
@@ -264,7 +267,6 @@ video.mirrored {
   display: flex;
   justify-content: center;
   gap: 12px;
-  margin-bottom: 24px;
   flex-wrap: wrap;
 }
 
@@ -306,7 +308,7 @@ video.mirrored {
   color: #fca5a5;
 }
 
-/* Result Section (Original fallback kung sakaling gamitin pa) */
+/* Result Section */
 .result-image-box {
   margin: 0 auto 20px auto;
   display: inline-block;
@@ -324,8 +326,101 @@ video.mirrored {
 }
 
 /* ==========================================
-   ADDED: Modal Pop-up Styles (Themed)
+   ADDED / MIGRATED STYLES FOR CLEAN CLASSNAMES
    ========================================== */
+
+.connection-top-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.btn-copy-link {
+  padding: 6px 12px;
+  font-size: 0.85rem;
+  background: #fee2e2;
+  border: 1px solid #fecaca;
+  color: #991b1b;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.section-heading {
+  margin: 0 0 12px 0;
+  font-size: 1.1rem;
+  color: #f3f4f6;
+}
+
+.layout-spacing {
+  margin-bottom: 20px;
+}
+
+.btn-capture-spacing {
+  margin-top: 10px;
+}
+
+.hidden-canvas {
+  display: none;
+}
+
+.modal-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.modal-title {
+  margin: 0;
+  font-size: 1.2rem;
+  color: #f3f4f6;
+}
+
+.btn-modal-close {
+  background: transparent;
+  border: none;
+  color: #9ca3af;
+  font-size: 1.5rem;
+  cursor: pointer;
+}
+
+.modal-input-container {
+  margin-bottom: 12px;
+  text-align: left;
+}
+
+.modal-input-label {
+  font-size: 0.85rem;
+  color: #9ca3af;
+  display: block;
+  margin-bottom: 4px;
+}
+
+.modal-text-input {
+  width: 100%;
+  font-size: 0.9rem;
+  padding: 8px 12px;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.btn-modal-close-secondary {
+  padding: 10px 16px;
+  background: #718098;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+/* Modal Pop-up Styles (Themed) */
 .modal-overlay {
   position: fixed;
   inset: 0;
