@@ -7,7 +7,7 @@ export default function App() {
   const [isConnected, setIsConnected] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState('classic');
   const [boxCount, setBoxCount] = useState(4);
-  const [customText, setCustomText] = useState('You ♥ Me'); // State para sa custom text na pwede mong baguhin
+  const [customText, setCustomText] = useState('You ♥ Me');
   const [snapshot, setSnapshot] = useState(null);
   const [isCapturing, setIsCapturing] = useState(false);
   
@@ -134,7 +134,6 @@ export default function App() {
     alert('Link copied to clipboard.');
   };
 
-  // Function para i-generate ang canvas (pwede i-call ulit kung babaguhin ang custom text)
   const generateCanvasImage = (textInput) => {
     const canvas = canvasRef.current;
     if (!canvas) return null;
@@ -143,7 +142,6 @@ export default function App() {
     canvas.width = 600;
     canvas.height = boxCount === 2 ? 620 : boxCount === 3 ? 740 : 860;
 
-    // Background styling depende sa template (Walang mabigat na text, minimalist/design lang)
     if (selectedTemplate === 'romantic') {
       ctx.fillStyle = '#2b0914';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -181,7 +179,6 @@ export default function App() {
       drawFrame(remoteVideoRef.current, 320, currentY, 230, boxHeight, false);
     }
 
-    // Ilagay ang custom text o design sa ilalim ng mga boxes kung meron man
     if (textInput) {
       ctx.fillStyle = selectedTemplate === 'classic' ? '#1f2937' : '#ff758c';
       ctx.font = 'bold 24px system-ui, sans-serif';
@@ -200,7 +197,6 @@ export default function App() {
     setSnapshot(imageURL);
   };
 
-  // Kapag binago ang text habang nasa preview modal, i-update natin agad ang image
   const handleCustomTextChange = (e) => {
     const newText = e.target.value;
     setCustomText(newText);
@@ -228,15 +224,12 @@ export default function App() {
 
         {/* Connection Panel */}
         <div className="panel connection-panel">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
-            <p className="peer-id-text" style={{ margin: 0 }}>
+          <div className="connection-top-row">
+            <p className="peer-id-text">
               Your Code: <strong className="peer-id-highlight">{peerId}</strong>
             </p>
             {peerId && (
-              <button 
-                onClick={copyShareableLink} 
-                style={{ padding: '6px 12px', fontSize: '0.85rem', background: '#fee2e2', border: '1px solid #fecaca', color: '#991b1b', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}
-              >
+              <button onClick={copyShareableLink} className="btn-copy-link">
                 Copy Invite Link
               </button>
             )}
@@ -277,8 +270,8 @@ export default function App() {
 
         {/* Template & Layout Selection Panel */}
         <div className="panel">
-          <h3 style={{ margin: '0 0 12px 0', fontSize: '1.1rem', color: '#f3f4f6' }}>Select Layout (Boxes)</h3>
-          <div className="template-buttons" style={{ marginBottom: '20px' }}>
+          <h3 className="section-heading">Select Layout (Boxes)</h3>
+          <div className="template-buttons layout-spacing">
             <button 
               onClick={() => setBoxCount(2)}
               className={`template-btn classic ${boxCount === 2 ? 'active' : ''}`}
@@ -299,7 +292,7 @@ export default function App() {
             </button>
           </div>
 
-          <h3 style={{ margin: '0 0 12px 0', fontSize: '1.1rem', color: '#f3f4f6' }}>Select Theme</h3>
+          <h3 className="section-heading">Select Theme</h3>
           <div className="template-buttons">
             <button 
               onClick={() => setSelectedTemplate('classic')}
@@ -321,51 +314,44 @@ export default function App() {
             </button>
           </div>
 
-          <button className="btn-capture" onClick={takeSnapshot} style={{ marginTop: '10px' }}>
+          <button className="btn-capture btn-capture-spacing" onClick={takeSnapshot}>
             Capture Photo Strip
           </button>
         </div>
 
-        <canvas ref={canvasRef} style={{ display: 'none' }} />
+        <canvas ref={canvasRef} className="hidden-canvas" />
 
         {/* Pop-up Modal Preview with Custom Text Input */}
         {snapshot && (
           <div className="modal-overlay">
             <div className="modal-content">
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-                <h3 style={{ margin: 0, fontSize: '1.2rem', color: '#f3f4f6' }}>Customize & Preview</h3>
-                <button 
-                  onClick={() => setSnapshot(null)}
-                  style={{ background: 'transparent', border: 'none', color: '#9ca3af', fontSize: '1.5rem', cursor: 'pointer' }}
-                >
+              <div className="modal-header-row">
+                <h3 className="modal-title">Customize & Preview</h3>
+                <button onClick={() => setSnapshot(null)} className="btn-modal-close">
                   &times;
                 </button>
               </div>
 
-              {/* Input field para ma-customize ang text sa ilalim bago i-download */}
-              <div style={{ marginBottom: '12px', textAlign: 'left' }}>
-                <label style={{ fontSize: '0.85rem', color: '#9ca3af', display: 'block', marginBottom: '4px' }}>Custom Bottom Text:</label>
+              <div className="modal-input-container">
+                <label className="modal-input-label">Custom Bottom Text:</label>
                 <input 
                   type="text" 
                   value={customText} 
                   onChange={handleCustomTextChange}
                   placeholder="I-type ang mensahe o pangalan dito..."
-                  className="peer-input"
-                  style={{ width: '100%', fontSize: '0.9rem', padding: '8px 12px' }}
+                  className="peer-input modal-text-input"
                 />
               </div>
 
-              <div className="result-image-box" style={{ marginBottom: '16px' }}>
+              <div className="result-image-box">
                 <img src={snapshot} alt="Template Preview" className="result-img" />
               </div>
-              <div style={{ display: 'flex', gap: '10px' }}>
-                <a href={snapshot} download="ldr-photostrip.png" className="btn-download" style={{ flex: 1, textAlign: 'center', textDecoration: 'none' }}>
+              
+              <div className="modal-actions">
+                <a href={snapshot} download="ldr-photostrip.png" className="btn-download">
                   Download Photo Strip
                 </a>
-                <button 
-                  onClick={() => setSnapshot(null)} 
-                  style={{ padding: '10px 16px', background: '#718098', color: '#fff', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}
-                >
+                <button onClick={() => setSnapshot(null)} className="btn-modal-close-secondary">
                   Close
                 </button>
               </div>
