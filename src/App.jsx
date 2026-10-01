@@ -17,7 +17,17 @@ function PhotoboothApp() {
   const [isCapturing, setIsCapturing] = useState(false);
   const [countdown, setCountdown] = useState(null);
   const [idGeneratedMsg, setIdGeneratedMsg] = useState(false);
+
+  // States para sa Media Controls (Camera, Mic)
+  const [isCameraOn, setIsCameraOn] = useState(true);
+  const [isMicOn, setIsMicOn] = useState(true);
   
+  // States para sa Mini Chat / Messaging via DataConnection
+  const [messages, setMessages] = useState([]);
+  const [chatInput, setChatInput] = useState('');
+  const [showChat, setShowChat] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
+
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [activeSubModal, setActiveSubModal] = useState(null);
   
@@ -26,8 +36,10 @@ function PhotoboothApp() {
   const remoteVideoRef = useRef(null);
   const canvasRef = useRef(null);
   const localStreamRef = useRef(null);
+  const activeCallRef = useRef(null);
+  const activeConnRef = useRef(null); // Reference para sa DataConnection (chat)
+  const chatMessagesEndRef = useRef(null);
 
-  // Optimized PeerJS Initialization
   const initializePeer = (idToUse) => {
     if (peerInstance.current) {
       peerInstance.current.destroy();
@@ -59,8 +71,16 @@ function PhotoboothApp() {
       }
     });
 
+    // Pagtanggap ng incoming chat connection mula sa partner
+    peer.on('connection', (conn) => {
+      activeConnRef.current = conn;
+      setupConnectionListeners(conn);
+    });
+
     peer.on('call', (call) => {
       setIsConnecting(true);
+      activeCallRef.current = call;
+      
       const answerCall = (stream) => {
         call.answer(stream);
         call.on('stream', (remoteStream) => {
@@ -71,8 +91,7 @@ function PhotoboothApp() {
           setIsConnecting(false);
         });
         call.on('close', () => {
-          setIsConnected(false);
-          setIsConnecting(false);
+          handleCleanupOnDisconnect();
         });
       };
 
@@ -94,10 +113,24 @@ function PhotoboothApp() {
     });
   };
 
+  const setupConnectionListeners = (conn) => {
+    conn.on('data', (data) => {
+      if (data && data.type === 'chat') {
+        setMessages((prev) => [...prev, { sender: 'partner', text: data.text, time: data.time }]);
+        if (!showChat) {
+          setUnreadCount((prev) => prev + 1);
+        }
+      }
+    });
+
+    conn.on('close', () => {
+      console.log('Chat connection closed');
+    });
+  };
+
   useEffect(() => {
     initializePeer(peerId);
 
-    // High quality media constraints para sa malinaw na video
     navigator.mediaDevices.getUserMedia({ 
       video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: "user" }, 
       audio: true 
@@ -129,11 +162,19 @@ function PhotoboothApp() {
     };
   }, []);
 
+  useEffect(() => {
+    if (showChat) {
+      setUnreadCount(0);
+      chatMessagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [messages, showChat]);
+
   const handleGenerateNewId = () => {
     const newId = Math.floor(1000 + Math.random() * 9000).toString();
     setPeerId(newId);
     setIsConnected(false);
     setIsConnecting(false);
+    setMessages([]);
     initializePeer(newId);
 
     setIdGeneratedMsg(true);
@@ -142,7 +183,6 @@ function PhotoboothApp() {
     }, 3000);
   };
 
-  // Na-optimize na callPartner: Awtomatikong kukuha ng stream kung hindi pa ready para walang lumalabas na alert popup
   const callPartner = (remoteId) => {
     if (!peerInstance.current) return;
     
@@ -160,10 +200,19 @@ function PhotoboothApp() {
     console.log(`Calling partner ID: ${trimmedId}`);
     setIsConnecting(true);
 
+    // Pagbukas ng DataConnection para sa chat
+    const conn = peerInstance.current.connect(trimmedId);
+    activeConnRef.current = conn;
+    conn.on('open', () => {
+      setupConnectionListeners(conn);
+    });
+
     const executeCall = (stream) => {
       const call = peerInstance.current.call(trimmedId, stream);
       
       if (call) {
+        activeCallRef.current = call;
+
         call.on('stream', (remoteStream) => {
           if (remoteVideoRef.current) {
             remoteVideoRef.current.srcObject = remoteStream;
@@ -173,8 +222,7 @@ function PhotoboothApp() {
         });
 
         call.on('close', () => {
-          setIsConnected(false);
-          setIsConnecting(false);
+          handleCleanupOnDisconnect();
         });
 
         call.on('error', (err) => {
@@ -207,6 +255,62 @@ function PhotoboothApp() {
           alert('Please allow camera and microphone access to connect.');
         });
     }
+  };
+
+  const handleDisconnect = () => {
+    if (activeCallRef.current) {
+      activeCallRef.current.close();
+      activeCallRef.current = null;
+    }
+    if (activeConnRef.current) {
+      activeConnRef.current.close();
+      activeConnRef.current = null;
+    }
+    handleCleanupOnDisconnect();
+  };
+
+  const handleCleanupOnDisconnect = () => {
+    setIsConnected(false);
+    setIsConnecting(false);
+    if (remoteVideoRef.current) {
+      remoteVideoRef.current.srcObject = null;
+    }
+    setRemotePeerId('');
+  };
+
+  const toggleCamera = () => {
+    if (localStreamRef.current) {
+      const videoTrack = localStreamRef.current.getVideoTracks()[0];
+      if (videoTrack) {
+        videoTrack.enabled = !videoTrack.enabled;
+        setIsCameraOn(videoTrack.enabled);
+      }
+    }
+  };
+
+  const toggleMic = () => {
+    if (localStreamRef.current) {
+      const audioTrack = localStreamRef.current.getAudioTracks()[0];
+      if (audioTrack) {
+        audioTrack.enabled = !audioTrack.enabled;
+        setIsMicOn(audioTrack.enabled);
+      }
+    }
+  };
+
+  const sendMessage = (e) => {
+    e.preventDefault();
+    if (!chatInput.trim()) return;
+
+    const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const messageData = { type: 'chat', text: chatInput.trim(), time: timeStr };
+
+    if (activeConnRef.current && activeConnRef.current.open) {
+      activeConnRef.current.send(messageData);
+    }
+
+    setMessages((prev) => [...prev, { sender: 'you', text: chatInput.trim(), time: timeStr }]);
+    setChatInput('');
   };
 
   const playShutterSound = () => {
@@ -427,9 +531,15 @@ function PhotoboothApp() {
               value={remotePeerId} 
               onChange={(e) => setRemotePeerId(e.target.value)}
             />
-            <button className="btn-primary" onClick={() => callPartner(remotePeerId)}>
-              {isConnecting ? 'Connecting...' : 'Connect'}
-            </button>
+            {isConnected ? (
+              <button className="btn-primary" style={{ backgroundColor: '#ef4444' }} onClick={handleDisconnect}>
+                Disconnect
+              </button>
+            ) : (
+              <button className="btn-primary" onClick={() => callPartner(remotePeerId)}>
+                {isConnecting ? 'Connecting...' : 'Connect'}
+              </button>
+            )}
           </div>
         </div>
 
@@ -440,6 +550,127 @@ function PhotoboothApp() {
               <span className="tag-mirror">Mirror</span>
             </div>
             <video ref={localVideoRef} autoPlay playsInline muted className="mirrored" />
+            
+            {/* Control Buttons (Camera, Mic, and Chat Toggle) */}
+            <div style={{
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              gap: '12px',
+              padding: '10px',
+              backgroundColor: 'rgba(0,0,0,0.3)'
+            }}>
+              {/* Camera Icon Toggle */}
+              <button 
+                onClick={toggleCamera} 
+                title={isCameraOn ? "Turn off camera" : "Turn on camera"}
+                style={{
+                  width: '42px',
+                  height: '42px',
+                  borderRadius: '50%',
+                  border: 'none',
+                  backgroundColor: isCameraOn ? '#374151' : '#ef4444',
+                  color: '#fff',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  transition: 'background-color 0.2s'
+                }}
+              >
+                {isCameraOn ? (
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <polygon points="23 7 16 12 23 17 23 7"></polygon>
+                    <rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect>
+                  </svg>
+                ) : (
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M16 16v1a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h2m5.66 0H14a2 2 0 0 1 2 2v3.34l4.58-4.58A2 2 0 0 1 24 7v10a2 2 0 0 1-.34 1.12L20.34 14.5"></path>
+                    <line x1="1" y1="1" x2="23" y2="23"></line>
+                  </svg>
+                )}
+              </button>
+
+              {/* Microphone Icon Toggle */}
+              <button 
+                onClick={toggleMic} 
+                title={isMicOn ? "Mute microphone" : "Unmute microphone"}
+                style={{
+                  width: '42px',
+                  height: '42px',
+                  borderRadius: '50%',
+                  border: 'none',
+                  backgroundColor: isMicOn ? '#374151' : '#ef4444',
+                  color: '#fff',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  transition: 'background-color 0.2s'
+                }}
+              >
+                {isMicOn ? (
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+                    <path d="M19 10v1a7 7 0 0 1-14 0v-1"></path>
+                    <line x1="12" y1="19" x2="12" y2="23"></line>
+                    <line x1="8" y1="23" x2="16" y2="23"></line>
+                  </svg>
+                ) : (
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="1" y1="1" x2="23" y2="23"></line>
+                    <path d="M9 9v3a3 3 0 0 0 5.12 2.12M15 9.34V4a3 3 0 0 0-5.94-.6"></path>
+                    <path d="M17 16.95A7 7 0 0 1 5 11v-1m14 0v1a6.91 6.91 0 0 1-.72 3.12"></path>
+                    <line x1="12" y1="19" x2="12" y2="23"></line>
+                    <line x1="8" y1="23" x2="16" y2="23"></line>
+                  </svg>
+                )}
+              </button>
+
+              {/* Chat Toggle Button with Notification Badge */}
+              <button 
+                onClick={() => setShowChat(!showChat)} 
+                title="Toggle Mini Chat"
+                style={{
+                  position: 'relative',
+                  width: '42px',
+                  height: '42px',
+                  borderRadius: '50%',
+                  border: 'none',
+                  backgroundColor: showChat ? '#ff758c' : '#374151',
+                  color: '#fff',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  transition: 'background-color 0.2s'
+                }}
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                </svg>
+                {unreadCount > 0 && (
+                  <span style={{
+                    position: 'absolute',
+                    top: '-4px',
+                    right: '-4px',
+                    backgroundColor: '#ef4444',
+                    color: '#fff',
+                    fontSize: '10px',
+                    fontWeight: 'bold',
+                    borderRadius: '50%',
+                    width: '18px',
+                    height: '18px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    border: '2px solid #111'
+                  }}>
+                    {unreadCount}
+                  </span>
+                )}
+              </button>
+            </div>
           </div>
 
           <div className="video-card" style={{ position: 'relative' }}>
@@ -451,6 +682,122 @@ function PhotoboothApp() {
             </div>
             
             <video ref={remoteVideoRef} autoPlay playsInline style={{ display: isConnected ? 'block' : 'none' }} />
+
+            {/* Mini Chat Pop-out Box over Partner Video container */}
+            {showChat && (
+              <div style={{
+                position: 'absolute',
+                bottom: '10px',
+                right: '10px',
+                left: '10px',
+                height: '240px',
+                backgroundColor: 'rgba(20, 20, 24, 0.95)',
+                backdropFilter: 'blur(8px)',
+                borderRadius: '12px',
+                border: '1px solid rgba(255, 255, 255, 0.1)',
+                display: 'flex',
+                flexDirection: 'column',
+                zIndex: 5,
+                boxShadow: '0 8px 24px rgba(0,0,0,0.5)',
+                overflow: 'hidden'
+              }}>
+                <div style={{
+                  padding: '8px 12px',
+                  backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                  borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center'
+                }}>
+                  <span style={{ fontSize: '13px', fontWeight: 'bold', color: '#fff' }}>Mini Chat</span>
+                  <button 
+                    onClick={() => setShowChat(false)}
+                    style={{ background: 'none', border: 'none', color: '#9ca3af', cursor: 'pointer', fontSize: '16px' }}
+                  >
+                    &times;
+                  </button>
+                </div>
+
+                <div style={{
+                  flex: 1,
+                  padding: '10px',
+                  overflowY: 'auto',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '8px'
+                }}>
+                  {messages.length === 0 ? (
+                    <p style={{ textAlign: 'center', fontSize: '12px', color: '#6b7280', margin: 'auto' }}>
+                      No messages yet. Say hi to your partner! 👋
+                    </p>
+                  ) : (
+                    messages.map((msg, index) => (
+                      <div 
+                        key={index} 
+                        style={{
+                          alignSelf: msg.sender === 'you' ? 'flex-end' : 'flex-start',
+                          maxWidth: '75%',
+                          backgroundColor: msg.sender === 'you' ? '#ff758c' : '#374151',
+                          color: '#fff',
+                          padding: '6px 10px',
+                          borderRadius: '10px',
+                          fontSize: '12px'
+                        }}
+                      >
+                        <p style={{ margin: 0, wordBreak: 'break-word' }}>{msg.text}</p>
+                        <span style={{ fontSize: '9px', opacity: 0.7, float: 'right', marginTop: '2px', marginLeft: '6px' }}>
+                          {msg.time}
+                        </span>
+                      </div>
+                    ))
+                  )}
+                  <div ref={chatMessagesEndRef} />
+                </div>
+
+                <form onSubmit={sendMessage} style={{
+                  display: 'flex',
+                  padding: '8px',
+                  backgroundColor: 'rgba(0, 0, 0, 0.2)',
+                  borderTop: '1px solid rgba(255, 255, 255, 0.05)',
+                  gap: '6px'
+                }}>
+                  <input 
+                    type="text" 
+                    placeholder={isConnected ? "Type a message..." : "Connect first to chat"} 
+                    value={chatInput}
+                    onChange={(e) => setChatInput(e.target.value)}
+                    disabled={!isConnected}
+                    style={{
+                      flex: 1,
+                      backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                      border: 'none',
+                      borderRadius: '6px',
+                      padding: '6px 10px',
+                      color: '#fff',
+                      fontSize: '12px',
+                      outline: 'none'
+                    }}
+                  />
+                  <button 
+                    type="submit" 
+                    disabled={!isConnected}
+                    style={{
+                      backgroundColor: '#ff758c',
+                      color: '#fff',
+                      border: 'none',
+                      borderRadius: '6px',
+                      padding: '6px 12px',
+                      fontSize: '12px',
+                      fontWeight: 'bold',
+                      cursor: isConnected ? 'pointer' : 'not-allowed',
+                      opacity: isConnected ? 1 : 0.5
+                    }}
+                  >
+                    Send
+                  </button>
+                </form>
+              </div>
+            )}
 
             {!isConnected && (
               <div style={{
