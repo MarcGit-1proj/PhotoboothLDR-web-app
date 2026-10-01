@@ -1,7 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { BrowserRouter as Router, Routes, Route, useNavigate } from 'react-router-dom';
+import Frontpage from './components/Frontpage';
 import './style/App.css';
 
-export default function App() {
+// Photobooth Component (Ang lumang App code mo)
+function PhotoboothApp() {
+  const navigate = useNavigate();
   const [peerId, setPeerId] = useState(() => Math.floor(1000 + Math.random() * 9000).toString());
   const [remotePeerId, setRemotePeerId] = useState('');
   const [isConnected, setIsConnected] = useState(false);
@@ -12,9 +16,8 @@ export default function App() {
   const [isCapturing, setIsCapturing] = useState(false);
   const [countdown, setCountdown] = useState(null);
   
-  // States para sa Hamburger Menu (Navigation Dropdown/Modal)
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [activeSubModal, setActiveSubModal] = useState(null); // 'about', 'contact', 'developer', 'settings'
+  const [activeSubModal, setActiveSubModal] = useState(null);
   
   const peerInstance = useRef(null);
   const localVideoRef = useRef(null);
@@ -125,12 +128,6 @@ export default function App() {
         alert('Error: No ID generated matches this.');
       });
     }
-
-    setTimeout(() => {
-      if (!isConnected) {
-        console.log('Connection attempt timed out or target peer does not exist.');
-      }
-    }, 4000);
   };
 
   const copyShareableLink = () => {
@@ -152,9 +149,7 @@ export default function App() {
       gainNode.connect(audioCtx.destination);
       osc.start();
       osc.stop(audioCtx.currentTime + 0.1);
-    } catch (e) {
-      // Ignore if audio context not allowed yet
-    }
+    } catch (e) {}
   };
 
   const generateCanvasImage = (textInput) => {
@@ -256,10 +251,8 @@ export default function App() {
       )}
 
       <div className="max-width-wrapper">
-        
-        {/* Header with Custom Hamburger Menu Button */}
         <header className="app-header">
-          <div>
+          <div style={{ cursor: 'pointer' }} onClick={() => navigate('/')}>
             <h2 className="app-title">LDR Photobooth</h2>
             <p className="app-subtitle">Capture memories across the distance</p>
           </div>
@@ -269,7 +262,6 @@ export default function App() {
               <span>{isConnected ? 'Connected' : 'Waiting...'}</span>
             </div>
 
-            {/* Hamburger Icon Button[cite: 4] */}
             <button 
               className="hamburger-btn" 
               onClick={() => setIsMenuOpen(true)}
@@ -282,7 +274,6 @@ export default function App() {
           </div>
         </header>
 
-        {/* Hamburger Menu Overlay & Modal Box[cite: 5] */}
         {isMenuOpen && (
           <div className="menu-overlay" onClick={() => setIsMenuOpen(false)}>
             <div className="menu-box" onClick={(e) => e.stopPropagation()}>
@@ -290,6 +281,7 @@ export default function App() {
                 &times;
               </button>
               <ul className="menu-list">
+                <li onClick={() => { setIsMenuOpen(false); navigate('/'); }}>Home / Frontpage</li>
                 <li onClick={() => { setIsMenuOpen(false); setActiveSubModal('about'); }}>About</li>
                 <li onClick={() => { setIsMenuOpen(false); setActiveSubModal('contact'); }}>Contact</li>
                 <li onClick={() => { setIsMenuOpen(false); setActiveSubModal('developer'); }}>Developer</li>
@@ -299,81 +291,33 @@ export default function App() {
           </div>
         )}
 
-        {/* Dynamic Modals Styled Exactly Like RchedS */}
         {activeSubModal && (
           <div className="modal-overlay">
             <div className="modal-content style-modal-box">
-              
-              {/* Modal Icon Header */}
-              <div className="modal-icon-header">
-                {activeSubModal === 'about' && (
-                  <svg className="modal-svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-                )}
-                {activeSubModal === 'contact' && (
-                  <svg className="modal-svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
-                )}
-                {activeSubModal === 'developer' && (
-                  <svg className="modal-svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
-                )}
-                {activeSubModal === 'settings' && (
-                  <svg className="modal-svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-                )}
-              </div>
-
               <h3 className="modal-main-heading">
-                {activeSubModal === 'about' && 'ABOUT'}
-                {activeSubModal === 'contact' && 'CONTACT'}
-                {activeSubModal === 'developer' && 'DEVELOPER'}
-                {activeSubModal === 'settings' && 'SETTINGS'}
+                {activeSubModal.toUpperCase()}
               </h3>
-
               <div className="modal-body-text">
                 {activeSubModal === 'about' && (
-                  <>
-                    <p>
-                      <strong>LDR Photobooth</strong> is a specialized web application built with React and PeerJS, designed to help long-distance couples bridge the physical gap, connect via live video, and capture synchronized photobooth strips together in real-time.
-                    </p>
-                    <p>
-                      It features customizable layouts, distinct visual themes, automated countdowns, and instant download capabilities to preserve your shared memories seamlessly across distances.
-                    </p>
-                  </>
+                  <p><strong>LDR Photobooth</strong> helps long-distance couples connect and capture synchronized photos in real-time.</p>
                 )}
-
                 {activeSubModal === 'contact' && (
-                  <>
-                    <p>Feel free to reach out for questions, suggestions, or project collaboration through the details below:</p>
-                    <div className="contact-info-block">
-                      <p><strong>Email:</strong> longakitmark1@gmail.com</p>
-                      <p><strong>Facebook:</strong> Marc Longakit</p>
-                      <p><strong>Phone:</strong> +63 948 4399 698</p>
-                    </div>
-                  </>
+                  <p><strong>Email:</strong> longakitmark1@gmail.com<br /><strong>Phone:</strong> +63 948 4399 698</p>
                 )}
-
                 {activeSubModal === 'developer' && (
-                  <p>
-                    <strong>Marc Longakit</strong> is a Computer Science student at ACLC College of Malolos, dedicated to building and refining interactive applications like LDR Photobooth using modern web technologies[cite: 9].
-                  </p>
+                  <p>Developed by <strong>Marc Longakit</strong>, Computer Science student at ACLC College of Malolos.</p>
                 )}
-
                 {activeSubModal === 'settings' && (
-                  <p style={{ textAlign: 'center', color: '#9ca3af', padding: '20px 0' }}>
-                    No available right now.
-                  </p>
+                  <p style={{ textAlign: 'center', color: '#9ca3af' }}>No available right now.</p>
                 )}
               </div>
-
               <div className="modal-actions-single">
-                <button onClick={() => setActiveSubModal(null)} className="btn-modal-close-dark">
-                  Close
-                </button>
+                <button onClick={() => setActiveSubModal(null)} className="btn-modal-close-dark">Close</button>
               </div>
-
             </div>
           </div>
         )}
 
-        {/* Connection Panel */}
         <div className="panel connection-panel">
           <div className="connection-top-row">
             <p className="peer-id-text">
@@ -400,7 +344,6 @@ export default function App() {
           </div>
         </div>
 
-        {/* Video Streams Grid */}
         <div className="video-grid">
           <div className="video-card">
             <div className="video-header">
@@ -419,50 +362,19 @@ export default function App() {
           </div>
         </div>
 
-        {/* Template & Layout Selection Panel */}
         <div className="panel">
           <h3 className="section-heading">Select Layout (Boxes)</h3>
           <div className="template-buttons layout-spacing">
-            <button 
-              onClick={() => setBoxCount(2)}
-              className={`template-btn classic ${boxCount === 2 ? 'active' : ''}`}
-            >
-              2 Frames
-            </button>
-            <button 
-              onClick={() => setBoxCount(3)}
-              className={`template-btn classic ${boxCount === 3 ? 'active' : ''}`}
-            >
-              3 Frames
-            </button>
-            <button 
-              onClick={() => setBoxCount(4)}
-              className={`template-btn classic ${boxCount === 4 ? 'active' : ''}`}
-            >
-              4 Frames
-            </button>
+            <button onClick={() => setBoxCount(2)} className={`template-btn classic ${boxCount === 2 ? 'active' : ''}`}>2 Frames</button>
+            <button onClick={() => setBoxCount(3)} className={`template-btn classic ${boxCount === 3 ? 'active' : ''}`}>3 Frames</button>
+            <button onClick={() => setBoxCount(4)} className={`template-btn classic ${boxCount === 4 ? 'active' : ''}`}>4 Frames</button>
           </div>
 
           <h3 className="section-heading">Select Theme</h3>
           <div className="template-buttons">
-            <button 
-              onClick={() => setSelectedTemplate('classic')}
-              className={`template-btn classic ${selectedTemplate === 'classic' ? 'active' : ''}`}
-            >
-              Classic White
-            </button>
-            <button 
-              onClick={() => setSelectedTemplate('romantic')}
-              className={`template-btn romantic ${selectedTemplate === 'romantic' ? 'active' : ''}`}
-            >
-              Date Night
-            </button>
-            <button 
-              onClick={() => setSelectedTemplate('neon')}
-              className={`template-btn neon ${selectedTemplate === 'neon' ? 'active' : ''}`}
-            >
-              Neon Glow
-            </button>
+            <button onClick={() => setSelectedTemplate('classic')} className={`template-btn classic ${selectedTemplate === 'classic' ? 'active' : ''}`}>Classic White</button>
+            <button onClick={() => setSelectedTemplate('romantic')} className={`template-btn romantic ${selectedTemplate === 'romantic' ? 'active' : ''}`}>Date Night</button>
+            <button onClick={() => setSelectedTemplate('neon')} className={`template-btn neon ${selectedTemplate === 'neon' ? 'active' : ''}`}>Neon Glow</button>
           </div>
 
           <button className="btn-capture btn-capture-spacing" onClick={startCountdownAndCapture}>
@@ -472,15 +384,12 @@ export default function App() {
 
         <canvas ref={canvasRef} className="hidden-canvas" />
 
-        {/* Pop-up Modal Preview with Custom Text Input */}
         {snapshot && (
           <div className="modal-overlay">
             <div className="modal-content style-modal-box">
               <div className="modal-header-row">
                 <h3 className="modal-title">Customize & Preview</h3>
-                <button onClick={() => setSnapshot(null)} className="btn-modal-close">
-                  &times;
-                </button>
+                <button onClick={() => setSnapshot(null)} className="btn-modal-close">&times;</button>
               </div>
 
               <div className="modal-input-container">
@@ -489,7 +398,6 @@ export default function App() {
                   type="text" 
                   value={customText} 
                   onChange={handleCustomTextChange}
-                  placeholder="Type message or names here..."
                   className="peer-input modal-text-input"
                 />
               </div>
@@ -499,18 +407,25 @@ export default function App() {
               </div>
               
               <div className="modal-actions">
-                <a href={snapshot} download="ldr-photostrip.png" className="btn-download">
-                  Download Photo Strip
-                </a>
-                <button onClick={() => setSnapshot(null)} className="btn-modal-close-secondary">
-                  Close
-                </button>
+                <a href={snapshot} download="ldr-photostrip.png" className="btn-download">Download Photo Strip</a>
+                <button onClick={() => setSnapshot(null)} className="btn-modal-close-secondary">Close</button>
               </div>
             </div>
           </div>
         )}
-
       </div>
     </div>
+  );
+}
+
+// Main App Router
+export default function App() {
+  return (
+    <Router>
+      <Routes>
+        <Route path="/" element={<Frontpage />} />
+        <Route path="/photobooth" element={<PhotoboothApp />} />
+      </Routes>
+    </Router>
   );
 }
