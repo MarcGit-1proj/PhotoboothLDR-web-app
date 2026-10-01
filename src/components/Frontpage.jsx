@@ -56,16 +56,15 @@ export default function Frontpage() {
       });
       
       stream.getTracks().forEach(track => track.stop());
-
+    } catch (error) {
+      console.warn("Camera or Microphone access denied or blocked by overlay, proceeding anyway:", error);
+    } finally {
+      // Kahit ma-allow o ma-deny, tutuloy pa rin sa susunod na page nang hindi nahihirapan ang user
       setShowPermissionModal(false);
       setIsLeaving(true);
       setTimeout(() => {
         navigate('/photobooth');
       }, 600);
-
-    } catch (error) {
-      alert("Camera or Microphone access denied. Please allow it in your browser settings!");
-      console.error("Permission denied:", error);
     }
   };
 
@@ -94,7 +93,7 @@ export default function Frontpage() {
       {showPermissionModal && (
         <div className="modal-overlay">
           <div className="modal-content">
-            <div className="modal-notification-badge">⚠️️ Notification</div>
+            <div className="modal-notification-badge">⚠ Notification</div>
             <h2>Enable Camera & Mic</h2>
             <p>To sync seamlessly with your partner, we need permission to turn on your camera and microphone.</p>
             
