@@ -16,6 +16,7 @@ function PhotoboothApp() {
   const [snapshot, setSnapshot] = useState(null);
   const [isCapturing, setIsCapturing] = useState(false);
   const [countdown, setCountdown] = useState(null);
+  const [idGeneratedMsg, setIdGeneratedMsg] = useState(false); // State para sa green notification
   
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [activeSubModal, setActiveSubModal] = useState(null);
@@ -26,8 +27,12 @@ function PhotoboothApp() {
   const canvasRef = useRef(null);
   const localStreamRef = useRef(null);
 
-  useEffect(() => {
-    const peer = new window.Peer(peerId, {
+  const initializePeer = (idToUse) => {
+    if (peerInstance.current) {
+      peerInstance.current.destroy();
+    }
+
+    const peer = new window.Peer(idToUse, {
       host: '0.peerjs.com',
       port: 443,
       secure: true
@@ -77,6 +82,10 @@ function PhotoboothApp() {
         });
       }
     });
+  };
+
+  useEffect(() => {
+    initializePeer(peerId);
 
     navigator.mediaDevices.getUserMedia({ video: true, audio: true })
       .then((stream) => {
@@ -105,6 +114,21 @@ function PhotoboothApp() {
       }
     };
   }, []);
+
+  // Mag-generate ng bagong ID at magpapakita ng sandaling green text sa tabi ng code
+  const handleGenerateNewId = () => {
+    const newId = Math.floor(1000 + Math.random() * 9000).toString();
+    setPeerId(newId);
+    setIsConnected(false);
+    setIsConnecting(false);
+    initializePeer(newId);
+
+    // I-show ang green notice at i-hide pagkalipas ng 3 segundo
+    setIdGeneratedMsg(true);
+    setTimeout(() => {
+      setIdGeneratedMsg(false);
+    }, 3000);
+  };
 
   const callPartner = (remoteId) => {
     if (!peerInstance.current) return;
@@ -153,12 +177,6 @@ function PhotoboothApp() {
     } else {
       setIsConnecting(false);
     }
-  };
-
-  const copyShareableLink = () => {
-    const shareLink = `${window.location.origin}${window.location.pathname}?connect=${peerId}`;
-    navigator.clipboard.writeText(shareLink);
-    alert('Link copied to clipboard.');
   };
 
   const playShutterSound = () => {
@@ -344,13 +362,30 @@ function PhotoboothApp() {
         )}
 
         <div className="panel connection-panel">
-          <div className="connection-top-row">
-            <p className="peer-id-text">
-              Your Code: <strong className="peer-id-highlight">{peerId}</strong>
-            </p>
+          <div className="connection-top-row" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <p className="peer-id-text" style={{ margin: 0 }}>
+                Your Code: <strong className="peer-id-highlight">{peerId}</strong>
+              </p>
+              {/* Green notification text na lilitaw sandali kapag nag-generate */}
+              {idGeneratedMsg && (
+                <span style={{ 
+                  fontSize: '12px', 
+                  color: '#10b981', 
+                  backgroundColor: 'rgba(16, 185, 129, 0.1)', 
+                  padding: '2px 8px', 
+                  borderRadius: '4px',
+                  fontWeight: '500',
+                  animation: 'fadeIn 0.2s ease-in-out'
+                }}>
+                  ✓ New ID generated
+                </span>
+              )}
+            </div>
+
             {peerId && (
-              <button onClick={copyShareableLink} className="btn-copy-link">
-                Copy Invite Link
+              <button onClick={handleGenerateNewId} className="btn-copy-link">
+                Generate New ID
               </button>
             )}
           </div>
