@@ -3,12 +3,13 @@ import { BrowserRouter as Router, Routes, Route, useNavigate } from 'react-route
 import Frontpage from './components/Frontpage';
 import './style/App.css';
 
-// Photobooth Component (Ang lumang App code mo)
+// Photobooth Component
 function PhotoboothApp() {
   const navigate = useNavigate();
   const [peerId, setPeerId] = useState(() => Math.floor(1000 + Math.random() * 9000).toString());
   const [remotePeerId, setRemotePeerId] = useState('');
   const [isConnected, setIsConnected] = useState(false);
+  const [isConnecting, setIsConnecting] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState('classic');
   const [boxCount, setBoxCount] = useState(4);
   const [customText, setCustomText] = useState('You ♥ Me');
@@ -38,6 +39,7 @@ function PhotoboothApp() {
     });
 
     peer.on('error', (err) => {
+      setIsConnecting(false);
       if (err.type === 'peer-unavailable') {
         alert('Error: No ID generated matches this.');
       } else {
@@ -46,22 +48,34 @@ function PhotoboothApp() {
     });
 
     peer.on('call', (call) => {
+      setIsConnecting(true);
+      const answerCall = (stream) => {
+        call.answer(stream);
+        call.on('stream', (remoteStream) => {
+          if (remoteVideoRef.current) {
+            remoteVideoRef.current.srcObject = remoteStream;
+          }
+          setIsConnected(true);
+          setIsConnecting(false);
+        });
+        call.on('close', () => {
+          setIsConnected(false);
+          setIsConnecting(false);
+        });
+      };
+
       if (localStreamRef.current) {
-        call.answer(localStreamRef.current);
+        answerCall(localStreamRef.current);
       } else {
         navigator.mediaDevices.getUserMedia({ video: true, audio: true }).then((stream) => {
           localStreamRef.current = stream;
           if (localVideoRef.current) localVideoRef.current.srcObject = stream;
-          call.answer(stream);
+          answerCall(stream);
+        }).catch((err) => {
+          setIsConnecting(false);
+          console.error('Camera permission error:', err);
         });
       }
-
-      call.on('stream', (remoteStream) => {
-        if (remoteVideoRef.current) {
-          remoteVideoRef.current.srcObject = remoteStream;
-        }
-        setIsConnected(true);
-      });
     });
 
     navigator.mediaDevices.getUserMedia({ video: true, audio: true })
@@ -113,6 +127,8 @@ function PhotoboothApp() {
     }
 
     console.log(`Calling partner ID: ${trimmedId}`);
+    setIsConnecting(true);
+    
     const call = peerInstance.current.call(trimmedId, stream);
     
     if (call) {
@@ -121,12 +137,21 @@ function PhotoboothApp() {
           remoteVideoRef.current.srcObject = remoteStream;
         }
         setIsConnected(true);
+        setIsConnecting(false);
+      });
+
+      call.on('close', () => {
+        setIsConnected(false);
+        setIsConnecting(false);
       });
 
       call.on('error', (err) => {
         console.error('Call connection error:', err);
-        alert('Error: No ID generated matches this.');
+        setIsConnecting(false);
+        alert('Error: No ID generated matches this or connection failed.');
       });
+    } else {
+      setIsConnecting(false);
     }
   };
 
@@ -339,7 +364,7 @@ function PhotoboothApp() {
               onChange={(e) => setRemotePeerId(e.target.value)}
             />
             <button className="btn-primary" onClick={() => callPartner(remotePeerId)}>
-              Connect
+              {isConnecting ? 'Connecting...' : 'Connect'}
             </button>
           </div>
         </div>
@@ -353,12 +378,50 @@ function PhotoboothApp() {
             <video ref={localVideoRef} autoPlay playsInline muted className="mirrored" />
           </div>
 
-          <div className="video-card">
+          <div className="video-card" style={{ position: 'relative' }}>
             <div className="video-header">
               <h4 className="video-title">Partner</h4>
-              <span className="tag-live">Live</span>
+              <span className={isConnected ? "tag-live" : "tag-mirror"}>
+                {isConnected ? 'Live' : (isConnecting ? 'Connecting' : 'Waiting')}
+              </span>
             </div>
-            <video ref={remoteVideoRef} autoPlay playsInline />
+            
+            <video ref={remoteVideoRef} autoPlay playsInline style={{ display: isConnected ? 'block' : 'none' }} />
+
+            {!isConnected && (
+              <div style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                width: '100%',
+                height: '100%',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                backgroundColor: 'rgba(17, 17, 17, 0.85)',
+                color: '#fff',
+                gap: '12px',
+                zIndex: 2
+              }}>
+                {isConnecting ? (
+                  <>
+                    <div style={{
+                      width: '40px',
+                      height: '40px',
+                      border: '4px solid rgba(255,255,255,0.2)',
+                      borderTop: '4px solid #ff758c',
+                      borderRadius: '50%',
+                      animation: 'spin 1s linear infinite'
+                    }} />
+                    <p style={{ fontSize: '14px', fontWeight: '500', color: '#ff758c' }}>Connecting to partner...</p>
+                    <style>{`@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}</style>
+                  </>
+                ) : (
+                  <p style={{ fontSize: '14px', color: '#9ca3af' }}>Waiting for partner to connect...</p>
+                )}
+              </div>
+            )}
           </div>
         </div>
 
