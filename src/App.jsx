@@ -16,7 +16,7 @@ function PhotoboothApp() {
   const [snapshot, setSnapshot] = useState(null);
   const [isCapturing, setIsCapturing] = useState(false);
   const [countdown, setCountdown] = useState(null);
-  const [idGeneratedMsg, setIdGeneratedMsg] = useState(false); // State para sa green notification
+  const [idGeneratedMsg, setIdGeneratedMsg] = useState(false);
   
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [activeSubModal, setActiveSubModal] = useState(null);
@@ -27,6 +27,7 @@ function PhotoboothApp() {
   const canvasRef = useRef(null);
   const localStreamRef = useRef(null);
 
+  // Optimized PeerJS Initialization
   const initializePeer = (idToUse) => {
     if (peerInstance.current) {
       peerInstance.current.destroy();
@@ -35,7 +36,13 @@ function PhotoboothApp() {
     const peer = new window.Peer(idToUse, {
       host: '0.peerjs.com',
       port: 443,
-      secure: true
+      secure: true,
+      config: {
+        iceServers: [
+          { urls: 'stun:stun.l.google.com:19302' },
+          { urls: 'stun:global.stun.twilio.com:3478' }
+        ]
+      }
     });
 
     peer.on('open', (id) => {
@@ -72,7 +79,10 @@ function PhotoboothApp() {
       if (localStreamRef.current) {
         answerCall(localStreamRef.current);
       } else {
-        navigator.mediaDevices.getUserMedia({ video: true, audio: true }).then((stream) => {
+        navigator.mediaDevices.getUserMedia({ 
+          video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: "user" }, 
+          audio: true 
+        }).then((stream) => {
           localStreamRef.current = stream;
           if (localVideoRef.current) localVideoRef.current.srcObject = stream;
           answerCall(stream);
@@ -87,7 +97,11 @@ function PhotoboothApp() {
   useEffect(() => {
     initializePeer(peerId);
 
-    navigator.mediaDevices.getUserMedia({ video: true, audio: true })
+    // High quality media constraints para sa malinaw na video
+    navigator.mediaDevices.getUserMedia({ 
+      video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: "user" }, 
+      audio: true 
+    })
       .then((stream) => {
         localStreamRef.current = stream;
         if (localVideoRef.current) {
@@ -115,7 +129,6 @@ function PhotoboothApp() {
     };
   }, []);
 
-  // Mag-generate ng bagong ID at magpapakita ng sandaling green text sa tabi ng code
   const handleGenerateNewId = () => {
     const newId = Math.floor(1000 + Math.random() * 9000).toString();
     setPeerId(newId);
@@ -123,13 +136,13 @@ function PhotoboothApp() {
     setIsConnecting(false);
     initializePeer(newId);
 
-    // I-show ang green notice at i-hide pagkalipas ng 3 segundo
     setIdGeneratedMsg(true);
     setTimeout(() => {
       setIdGeneratedMsg(false);
     }, 3000);
   };
 
+  // Na-optimize na callPartner: Awtomatikong kukuha ng stream kung hindi pa ready para walang lumalabas na alert popup
   const callPartner = (remoteId) => {
     if (!peerInstance.current) return;
     
@@ -144,38 +157,55 @@ function PhotoboothApp() {
       return;
     }
 
-    const stream = localStreamRef.current;
-    if (!stream) {
-      alert('Local video stream not ready yet.');
-      return;
-    }
-
     console.log(`Calling partner ID: ${trimmedId}`);
     setIsConnecting(true);
-    
-    const call = peerInstance.current.call(trimmedId, stream);
-    
-    if (call) {
-      call.on('stream', (remoteStream) => {
-        if (remoteVideoRef.current) {
-          remoteVideoRef.current.srcObject = remoteStream;
-        }
-        setIsConnected(true);
-        setIsConnecting(false);
-      });
 
-      call.on('close', () => {
-        setIsConnected(false);
-        setIsConnecting(false);
-      });
+    const executeCall = (stream) => {
+      const call = peerInstance.current.call(trimmedId, stream);
+      
+      if (call) {
+        call.on('stream', (remoteStream) => {
+          if (remoteVideoRef.current) {
+            remoteVideoRef.current.srcObject = remoteStream;
+          }
+          setIsConnected(true);
+          setIsConnecting(false);
+        });
 
-      call.on('error', (err) => {
-        console.error('Call connection error:', err);
+        call.on('close', () => {
+          setIsConnected(false);
+          setIsConnecting(false);
+        });
+
+        call.on('error', (err) => {
+          console.error('Call connection error:', err);
+          setIsConnecting(false);
+          alert('Error: No ID generated matches this or connection failed.');
+        });
+      } else {
         setIsConnecting(false);
-        alert('Error: No ID generated matches this or connection failed.');
-      });
+      }
+    };
+
+    if (localStreamRef.current) {
+      executeCall(localStreamRef.current);
     } else {
-      setIsConnecting(false);
+      navigator.mediaDevices.getUserMedia({ 
+        video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: "user" }, 
+        audio: true 
+      })
+        .then((stream) => {
+          localStreamRef.current = stream;
+          if (localVideoRef.current) {
+            localVideoRef.current.srcObject = stream;
+          }
+          executeCall(stream);
+        })
+        .catch((err) => {
+          setIsConnecting(false);
+          console.error('Camera permission error:', err);
+          alert('Please allow camera and microphone access to connect.');
+        });
     }
   };
 
@@ -367,7 +397,6 @@ function PhotoboothApp() {
               <p className="peer-id-text" style={{ margin: 0 }}>
                 Your Code: <strong className="peer-id-highlight">{peerId}</strong>
               </p>
-              {/* Green notification text na lilitaw sandali kapag nag-generate */}
               {idGeneratedMsg && (
                 <span style={{ 
                   fontSize: '12px', 
