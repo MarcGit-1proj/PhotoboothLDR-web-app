@@ -200,7 +200,6 @@ function PhotoboothApp() {
     console.log(`Calling partner ID: ${trimmedId}`);
     setIsConnecting(true);
 
-    // Pagbukas ng DataConnection para sa chat
     const conn = peerInstance.current.connect(trimmedId);
     activeConnRef.current = conn;
     conn.on('open', () => {
@@ -313,120 +312,8 @@ function PhotoboothApp() {
     setChatInput('');
   };
 
-  const playShutterSound = () => {
-    try {
-      const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-      const osc = audioCtx.createOscillator();
-      const gainNode = audioCtx.createGain();
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(800, audioCtx.currentTime);
-      gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
-      gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
-      osc.connect(gainNode);
-      gainNode.connect(audioCtx.destination);
-      osc.start();
-      osc.stop(audioCtx.currentTime + 0.1);
-    } catch (e) {}
-  };
-
-  const generateCanvasImage = (textInput) => {
-    const canvas = canvasRef.current;
-    if (!canvas) return null;
-    const ctx = canvas.getContext('2d');
-    
-    canvas.width = 600;
-    canvas.height = boxCount === 2 ? 620 : boxCount === 3 ? 740 : 860;
-
-    if (selectedTemplate === 'romantic') {
-      ctx.fillStyle = '#2b0914';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-    } else if (selectedTemplate === 'neon') {
-      ctx.fillStyle = '#09090b';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-    } else {
-      ctx.fillStyle = '#faf9f6';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-    }
-
-    const drawFrame = (videoEl, x, y, w, h, isMirrored = false) => {
-      if (!videoEl) return;
-      ctx.save();
-      ctx.translate(x, y);
-      ctx.fillStyle = '#111';
-      ctx.fillRect(0, 0, w, h);
-      
-      if (isMirrored) {
-        ctx.scale(-1, 1);
-        ctx.drawImage(videoEl, -w, 0, w, h);
-      } else {
-        ctx.drawImage(videoEl, 0, 0, w, h);
-      }
-      ctx.restore();
-    };
-
-    const startY = 40;
-    const boxHeight = boxCount === 2 ? 240 : boxCount === 3 ? 180 : 145;
-    const spacing = 15;
-
-    for (let i = 0; i < boxCount; i++) {
-      const currentY = startY + i * (boxHeight + spacing);
-      drawFrame(localVideoRef.current, 50, currentY, 230, boxHeight, true);
-      drawFrame(remoteVideoRef.current, 320, currentY, 230, boxHeight, false);
-    }
-
-    if (textInput) {
-      ctx.fillStyle = selectedTemplate === 'classic' ? '#1f2937' : '#ff758c';
-      ctx.font = 'bold 24px system-ui, sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillText(textInput, canvas.width / 2, canvas.height - 25);
-    }
-
-    return canvas.toDataURL('image/png');
-  };
-
-  const startCountdownAndCapture = () => {
-    if (countdown !== null) return;
-    setCountdown(3);
-
-    let currentCount = 3;
-    const timer = setInterval(() => {
-      currentCount -= 1;
-      if (currentCount > 0) {
-        setCountdown(currentCount);
-      } else {
-        clearInterval(timer);
-        setCountdown(null);
-        executeCapture();
-      }
-    }, 1000);
-  };
-
-  const executeCapture = () => {
-    playShutterSound();
-    setIsCapturing(true);
-    setTimeout(() => setIsCapturing(false), 500);
-
-    const imageURL = generateCanvasImage(customText);
-    setSnapshot(imageURL);
-  };
-
-  const handleCustomTextChange = (e) => {
-    const newText = e.target.value;
-    setCustomText(newText);
-    const updatedURL = generateCanvasImage(newText);
-    setSnapshot(updatedURL);
-  };
-
   return (
     <div className="app-container">
-      {isCapturing && <div className="flash-overlay" />}
-
-      {countdown !== null && (
-        <div className="countdown-overlay">
-          <span className="countdown-number">{countdown}</span>
-        </div>
-      )}
-
       <div className="max-width-wrapper">
         <header className="app-header">
           <div style={{ cursor: 'pointer' }} onClick={() => navigate('/')}>
@@ -836,26 +723,6 @@ function PhotoboothApp() {
           </div>
         </div>
 
-        <div className="panel">
-          <h3 className="section-heading">Select Layout (Boxes)</h3>
-          <div className="template-buttons layout-spacing">
-            <button onClick={() => setBoxCount(2)} className={`template-btn classic ${boxCount === 2 ? 'active' : ''}`}>2 Frames</button>
-            <button onClick={() => setBoxCount(3)} className={`template-btn classic ${boxCount === 3 ? 'active' : ''}`}>3 Frames</button>
-            <button onClick={() => setBoxCount(4)} className={`template-btn classic ${boxCount === 4 ? 'active' : ''}`}>4 Frames</button>
-          </div>
-
-          <h3 className="section-heading">Select Theme</h3>
-          <div className="template-buttons">
-            <button onClick={() => setSelectedTemplate('classic')} className={`template-btn classic ${selectedTemplate === 'classic' ? 'active' : ''}`}>Classic White</button>
-            <button onClick={() => setSelectedTemplate('romantic')} className={`template-btn romantic ${selectedTemplate === 'romantic' ? 'active' : ''}`}>Date Night</button>
-            <button onClick={() => setSelectedTemplate('neon')} className={`template-btn neon ${selectedTemplate === 'neon' ? 'active' : ''}`}>Neon Glow</button>
-          </div>
-
-          <button className="btn-capture btn-capture-spacing" onClick={startCountdownAndCapture}>
-            Capture Photo Strip
-          </button>
-        </div>
-
         <canvas ref={canvasRef} className="hidden-canvas" />
 
         {snapshot && (
@@ -871,7 +738,7 @@ function PhotoboothApp() {
                 <input 
                   type="text" 
                   value={customText} 
-                  onChange={handleCustomTextChange}
+                  onChange={(e) => setCustomText(e.target.value)}
                   className="peer-input modal-text-input"
                 />
               </div>
