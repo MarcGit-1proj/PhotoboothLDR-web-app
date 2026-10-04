@@ -62,7 +62,7 @@ export default function Frontpage() {
       setShowPermissionModal(false);
       setIsLeaving(true);
       setTimeout(() => {
-        navigate('/photobooth');
+        navigate('/main');
       }, 600);
     }
   };
@@ -70,7 +70,9 @@ export default function Frontpage() {
   return (
     <div className={`frontpage-wrapper ${isLeaving ? 'page-leave' : ''}`}>
       <div className="frontpage-content">
-        <div className="frontpage-badge"> Long-Distance Connection...</div>
+        <div className="frontpage-badge">
+          Long-Distance Connection<span className="dot-animation"><span>.</span><span>.</span><span>.</span></span>
+        </div>
         
         <p className="welcome-text">Welcome to</p>
         <h1 className="frontpage-title">Snap<span className="title-sync">Sync</span></h1>

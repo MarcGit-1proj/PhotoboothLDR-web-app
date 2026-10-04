@@ -62,6 +62,45 @@
   white-space: nowrap;
 }
 
+/* Loading Dots Animation para sa Badge */
+.dot-animation {
+  display: inline-flex;
+  margin-left: 2px;
+}
+
+.dot-animation span {
+  display: inline-block;
+  opacity: 0;
+  animation: dotBlink 1.4s infinite ease-in-out both;
+}
+
+.dot-animation span:nth-child(1) {
+  animation-delay: 0.2s;
+}
+
+.dot-animation span:nth-child(2) {
+  animation-delay: 0.4s;
+}
+
+.dot-animation span:nth-child(3) {
+  animation-delay: 0.6s;
+}
+
+@keyframes dotBlink {
+  0% {
+    opacity: 0;
+    transform: translateY(0);
+  }
+  50% {
+    opacity: 1;
+    transform: translateY(-2px);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(0);
+  }
+}
+
 /* Welcome Text */
 .welcome-text {
   font-size: 0.95rem;
