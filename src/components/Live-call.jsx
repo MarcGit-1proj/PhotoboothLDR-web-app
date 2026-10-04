@@ -2,9 +2,56 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../style/Live-call.css';
 
+// BAGO: 8-character ID (letters + numbers, walang I, O, 0, 1) para hindi mag-banggaan sa PeerJS server.
+// Ang 4-digit ID ay 9,000 lang ang posibleng bilang at ginagamit ito ng ibang tao sa libreng server,
+// kaya madalas "taken" na ang ID at hindi na nagbubukas ang connection.
+const generateCustomId = () => {
+  const letters = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
+  const digits = '23456789';
+  const all = letters + digits;
+  const pick = (set) => set.charAt(Math.floor(Math.random() * set.length));
+
+  const chars = [];
+  for (let i = 0; i < 3; i++) chars.push(pick(letters));
+  for (let i = 0; i < 3; i++) chars.push(pick(digits));
+  for (let i = 0; i < 2; i++) chars.push(pick(all));
+
+  for (let i = chars.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [chars[i], chars[j]] = [chars[j], chars[i]];
+  }
+
+  return chars.join('');
+};
+
+// BAGO: STUN + (optional) TURN. Kailangan ang TURN para makapag-connect ang magkaibang network
+// (halimbawa: WiFi sa isa, mobile data sa kabila). Ilagay ang credentials sa .env / Vercel:
+//   VITE_TURN_USERNAME=...
+//   VITE_TURN_CREDENTIAL=...
+const buildIceServers = () => {
+  const servers = [
+    { urls: 'stun:stun.l.google.com:19302' },
+    { urls: 'stun:global.stun.twilio.com:3478' }
+  ];
+
+  const turnUser = import.meta.env.VITE_TURN_USERNAME;
+  const turnCredential = import.meta.env.VITE_TURN_CREDENTIAL;
+
+  if (turnUser && turnCredential) {
+    servers.push(
+      { urls: 'turn:global.relay.metered.ca:80', username: turnUser, credential: turnCredential },
+      { urls: 'turn:global.relay.metered.ca:80?transport=tcp', username: turnUser, credential: turnCredential },
+      { urls: 'turn:global.relay.metered.ca:443', username: turnUser, credential: turnCredential },
+      { urls: 'turns:global.relay.metered.ca:443?transport=tcp', username: turnUser, credential: turnCredential }
+    );
+  }
+
+  return servers;
+};
+
 export default function LiveCall() {
   const navigate = useNavigate();
-  const [peerId, setPeerId] = useState(() => Math.floor(1000 + Math.random() * 9000).toString());
+  const [peerId, setPeerId] = useState(() => generateCustomId());
   const [remotePeerId, setRemotePeerId] = useState('');
   const [isConnected, setIsConnected] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
@@ -31,6 +78,17 @@ export default function LiveCall() {
   const chatMessagesEndRef = useRef(null);
   const chatInputRef = useRef(null);
 
+  // BAGO: mga ref para laging updated ang status sa loob ng mga callback at timer
+  const isConnectedRef = useRef(false);
+  const peerReadyRef = useRef(false);
+  const idRetryRef = useRef(0);
+  const noticeTimeoutRef = useRef(null);
+  const connectTimeoutRef = useRef(null);
+
+  useEffect(() => {
+    isConnectedRef.current = isConnected;
+  }, [isConnected]);
+
   useEffect(() => {
     const todayStr = new Date().toDateString();
     const storedData = JSON.parse(localStorage.getItem('snapSync_id_gen'));
@@ -53,6 +111,21 @@ export default function LiveCall() {
     return () => clearInterval(timer);
   }, [cooldown]);
 
+  // BAGO: iisang helper para sa lahat ng notification (para hindi nag-uumpugan ang mga timeout)
+  const showNotice = (text, duration = 3500) => {
+    setNotificationText(text);
+    setIdGeneratedMsg(true);
+    if (noticeTimeoutRef.current) clearTimeout(noticeTimeoutRef.current);
+    noticeTimeoutRef.current = setTimeout(() => setIdGeneratedMsg(false), duration);
+  };
+
+  const clearConnectTimeout = () => {
+    if (connectTimeoutRef.current) {
+      clearTimeout(connectTimeoutRef.current);
+      connectTimeoutRef.current = null;
+    }
+  };
+
   const setupConnectionListeners = (conn) => {
     activeConnRef.current = conn;
     conn.on('data', (data) => {
@@ -63,34 +136,81 @@ export default function LiveCall() {
         }
       }
     });
+    conn.on('error', (err) => {
+      console.error('Data connection error:', err);
+    });
+  };
+
+  // BAGO: may malinaw nang mensahe sa bawat klase ng error (dati tahimik lang ito)
+  const handlePeerError = (err) => {
+    console.error('Peer error:', err);
+    setIsConnecting(false);
+    clearConnectTimeout();
+
+    switch (err.type) {
+      case 'unavailable-id': {
+        // May ibang gumagamit na ng ID na ito sa server, gumawa ng bago at subukan ulit
+        if (idRetryRef.current < 5) {
+          idRetryRef.current += 1;
+          const newId = generateCustomId();
+          setPeerId(newId);
+          initializePeer(newId);
+        } else {
+          showNotice('Could not get a free code. Please refresh the page.');
+        }
+        break;
+      }
+      case 'peer-unavailable':
+        showNotice("Partner's code was not found. Check the code and make sure they opened Live Call.");
+        break;
+      case 'network':
+      case 'server-error':
+      case 'socket-error':
+      case 'socket-closed':
+        showNotice('Cannot reach the connection server. Check your internet and try again.');
+        break;
+      case 'webrtc':
+        showNotice('Connection failed. Try again or switch network.');
+        break;
+      default:
+        showNotice('Something went wrong. Please try again.');
+    }
   };
 
   const initializePeer = (idToUse) => {
     if (peerInstance.current) {
       peerInstance.current.destroy();
     }
+    peerReadyRef.current = false;
 
     const peer = new window.Peer(idToUse, {
       host: '0.peerjs.com',
       port: 443,
       secure: true,
       config: {
-        iceServers: [
-          { urls: 'stun:stun.l.google.com:19302' },
-          { urls: 'stun:global.stun.twilio.com:3478' }
-        ]
+        iceServers: buildIceServers()
       }
     });
 
+    // BINAGO: itinatakda agad ang peerInstance (dati sa 'open' pa, kaya walang nangyayari
+    // kapag pinindot ang Connect bago mag-open)
+    peerInstance.current = peer;
+
     peer.on('open', (id) => {
       console.log('Peer connected with ID:', id);
-      peerInstance.current = peer;
+      peerReadyRef.current = true;
+      idRetryRef.current = 0;
     });
 
-    peer.on('error', (err) => {
-      setIsConnecting(false);
-      console.error('Peer error:', err);
+    // BAGO: kapag nawala ang koneksyon sa PeerJS server (halimbawa nag-sleep ang phone), mag-reconnect
+    peer.on('disconnected', () => {
+      peerReadyRef.current = false;
+      if (!peer.destroyed) {
+        peer.reconnect();
+      }
     });
+
+    peer.on('error', handlePeerError);
 
     peer.on('connection', (conn) => {
       setupConnectionListeners(conn);
@@ -106,10 +226,15 @@ export default function LiveCall() {
           if (remoteVideoRef.current) {
             remoteVideoRef.current.srcObject = remoteStream;
           }
+          clearConnectTimeout();
           setIsConnected(true);
           setIsConnecting(false);
         });
         call.on('close', () => handleCleanupOnDisconnect());
+        call.on('error', (err) => {
+          console.error('Call error:', err);
+          setIsConnecting(false);
+        });
       };
 
       if (localStreamRef.current) {
@@ -126,6 +251,7 @@ export default function LiveCall() {
           .catch((err) => {
             setIsConnecting(false);
             console.error('Camera permission error:', err);
+            showNotice('Camera/mic permission is needed to join the call.');
           });
       }
     });
@@ -146,6 +272,8 @@ export default function LiveCall() {
       });
 
     return () => {
+      clearConnectTimeout();
+      if (noticeTimeoutRef.current) clearTimeout(noticeTimeoutRef.current);
       if (peerInstance.current) peerInstance.current.destroy();
     };
   }, []);
@@ -159,18 +287,17 @@ export default function LiveCall() {
 
   const handleGenerateNewId = () => {
     if (remainingAttempts <= 0) {
-      setNotificationText('Daily limit reached (7 attempts). Please try again tomorrow.');
-      setIdGeneratedMsg(true);
-      setTimeout(() => setIdGeneratedMsg(false), 3500);
+      showNotice('Daily limit reached (7 attempts). Please try again tomorrow.');
       return;
     }
     if (cooldown > 0) return;
 
-    const newId = Math.floor(1000 + Math.random() * 9000).toString();
+    const newId = generateCustomId();
     setPeerId(newId);
     setIsConnected(false);
     setIsConnecting(false);
     setMessages([]);
+    idRetryRef.current = 0;
     initializePeer(newId);
 
     const newAttempts = remainingAttempts - 1;
@@ -178,21 +305,37 @@ export default function LiveCall() {
     const todayStr = new Date().toDateString();
     localStorage.setItem('snapSync_id_gen', JSON.stringify({ date: todayStr, attempts: newAttempts }));
 
-    setNotificationText(`New ID generated successfully (${newAttempts}/7 attempts remaining).`);
-    setIdGeneratedMsg(true);
+    showNotice(`New ID generated successfully (${newAttempts}/7 attempts remaining).`, 3000);
     setCooldown(5);
-
-    setTimeout(() => {
-      setIdGeneratedMsg(false);
-    }, 3000);
   };
 
   const callPartner = (remoteId) => {
-    if (!peerInstance.current) return;
-    const trimmedId = remoteId.trim();
-    if (!trimmedId || trimmedId === peerId) return;
+    const trimmedId = remoteId.trim().toUpperCase();
+    if (!trimmedId) {
+      showNotice("Please enter your partner's code first.");
+      return;
+    }
+    if (trimmedId === peerId) {
+      showNotice("That's your own code. Enter your partner's code.");
+      return;
+    }
+    // BAGO: may mensahe na kapag hindi pa handa ang connection sa server
+    if (!peerInstance.current || !peerReadyRef.current) {
+      showNotice('Still connecting to the server. Please wait a moment and try again.');
+      return;
+    }
 
     setIsConnecting(true);
+
+    // BAGO: kung walang sagot sa loob ng 20 segundo, itigil at magpakita ng mensahe
+    clearConnectTimeout();
+    connectTimeoutRef.current = setTimeout(() => {
+      if (!isConnectedRef.current) {
+        if (activeCallRef.current) activeCallRef.current.close();
+        setIsConnecting(false);
+        showNotice('Could not connect. Check the code, and make sure both of you are online. Different networks may need a TURN server.', 6000);
+      }
+    }, 20000);
 
     const conn = peerInstance.current.connect(trimmedId);
     setupConnectionListeners(conn);
@@ -205,11 +348,18 @@ export default function LiveCall() {
           if (remoteVideoRef.current) {
             remoteVideoRef.current.srcObject = remoteStream;
           }
+          clearConnectTimeout();
           setIsConnected(true);
           setIsConnecting(false);
         });
         call.on('close', () => handleCleanupOnDisconnect());
+        call.on('error', (err) => {
+          console.error('Call error:', err);
+          clearConnectTimeout();
+          setIsConnecting(false);
+        });
       } else {
+        clearConnectTimeout();
         setIsConnecting(false);
       }
     };
@@ -225,7 +375,11 @@ export default function LiveCall() {
           }
           executeCall(stream);
         })
-        .catch(() => setIsConnecting(false));
+        .catch(() => {
+          clearConnectTimeout();
+          setIsConnecting(false);
+          showNotice('Camera/mic permission is needed to start the call.');
+        });
     }
   };
 
@@ -236,6 +390,7 @@ export default function LiveCall() {
   };
 
   const handleCleanupOnDisconnect = () => {
+    clearConnectTimeout();
     setIsConnected(false);
     setIsConnecting(false);
     if (remoteVideoRef.current) remoteVideoRef.current.srcObject = null;
@@ -347,10 +502,11 @@ export default function LiveCall() {
           <div className="connection-form">
             <input 
               type="text" 
-              placeholder="Enter partner's 4-digit code..." 
+              placeholder="Enter partner's code..." 
               value={remotePeerId} 
-              onChange={(e) => setRemotePeerId(e.target.value)}
+              onChange={(e) => setRemotePeerId(e.target.value.toUpperCase())}
               className="peer-input-field"
+              style={{ textTransform: 'uppercase' }}
             />
             {isConnected ? (
               <button className="btn-disconnect" onClick={handleDisconnect}>Disconnect</button>
