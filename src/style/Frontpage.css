@@ -7,7 +7,7 @@
   padding: 0;
 }
 
-/* Wrapper na may glowing background */
+/* Wrapper na may glowing background (Original Red/Dark Theme) */
 .frontpage-wrapper {
   font-family: 'Poppins', sans-serif;
   background-color: #0d0d0f;
@@ -21,33 +21,76 @@
   justify-content: center;
   align-items: center;
   overflow: hidden;
+  transition: opacity 0.6s ease-in-out, transform 0.6s ease-in-out;
+  opacity: 1;
+  transform: scale(1);
 }
 
-/* Glassmorphism Card Container */
+.frontpage-wrapper.page-leave {
+  opacity: 0;
+  transform: scale(1.02);
+}
+
+/* Glassmorphism Card Container na may Smooth Violet Glow Edge */
 .frontpage-content {
   background: rgba(20, 20, 24, 0.45);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(192, 132, 252, 0.25);
   padding: 45px 50px;
   border-radius: 24px;
-  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.7);
+  /* Pinalambot ang box-shadow para sa mas banayad at hindi masakit sa matang violet glow */
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.7), 0 0 30px rgba(192, 132, 252, 0.12);
   max-width: 520px;
   width: 90%;
   text-align: center;
 }
 
-/* Badge */
+/* Badge (Naayos para laging magkatabi ang text at animated dots) */
 .frontpage-badge {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: nowrap;
+  gap: 2px;
   background-color: rgba(239, 68, 68, 0.15);
   color: #ef4444;
-  padding: 6px 16px;
+  padding: 8px 18px;
   border-radius: 50px;
-  font-size: 0.85rem;
+  font-size: 0.95rem;
   font-weight: 500;
   margin-bottom: 16px;
   border: 1px solid rgba(239, 68, 68, 0.3);
+  white-space: nowrap;
+}
+
+/* Dot Animation */
+.dot-animation {
+  display: inline-flex;
+}
+
+.dot-animation span {
+  animation: blink 1.4s infinite both;
+}
+
+.dot-animation span:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.dot-animation span:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes blink {
+  0% { opacity: 0.2; }
+  20% { opacity: 1; }
+  100% { opacity: 0.2; }
+}
+
+/* Welcome Text */
+.welcome-text {
+  font-size: 0.95rem;
+  color: #9ca3af;
+  margin-bottom: 4px;
 }
 
 /* Main Title */
@@ -59,23 +102,20 @@
   letter-spacing: -0.5px;
 }
 
-/* Subtitle */
-.frontpage-subtitle {
-  font-size: 0.95rem;
-  color: #9ca3af;
-  margin-bottom: 24px;
-  line-height: 1.6;
+/* Purple Mix Gradient Color for Sync */
+.title-sync {
+  background: linear-gradient(135deg, #c084fc, #ec4899);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
 }
 
-/* Quotes Container Box */
-.quotes-box {
-  background: rgba(32, 32, 38, 0.4);
-  padding: 20px;
-  border-radius: 14px;
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  backdrop-filter: blur(10px);
+/* Glowing Quotes Container */
+.quotes-container-glowing {
+  padding: 15px 20px;
   margin-bottom: 30px;
-  min-height: 90px;
+  min-height: 80px;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -83,15 +123,16 @@
   position: relative;
 }
 
-/* Quote Text Style */
+/* Quote Text Style na may Violet/Pink Glow Effect */
 .quote-text {
-  font-size: 0.95rem;
+  font-size: 1rem;
   color: #f3f4f6;
   font-style: italic;
   font-weight: 400;
   line-height: 1.5;
   transition: opacity 0.5s ease-in-out;
   text-align: center;
+  text-shadow: 0 0 12px rgba(192, 132, 252, 0.4), 0 0 25px rgba(236, 72, 153, 0.25);
 }
 
 /* Fade In / Fade Out Classes */
@@ -103,16 +144,7 @@
   opacity: 0;
 }
 
-/* Counter Indicator sa ibabang kanan ng quote box */
-.quote-indicator {
-  position: absolute;
-  bottom: 6px;
-  right: 12px;
-  font-size: 0.7rem;
-  color: #6b7280;
-}
-
-/* Call to Action Button na may mabagal na pulsing/heartbeat animation */
+/* Call to Action Button */
 .btn-start-app {
   display: block;
   width: 100%;
@@ -154,7 +186,8 @@
 .btn-start-app:active {
   transform: scale(0.98);
 }
-/* Modal Overlay (Background Dim) */
+
+/* Modal Overlay */
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -170,7 +203,7 @@
   animation: fadeInModal 0.3s ease-in-out;
 }
 
-/* Modal Box (Glassmorphism style) */
+/* Modal Box */
 .modal-content {
   background: rgba(24, 24, 27, 0.85);
   border: 1px solid rgba(255, 255, 255, 0.12);
@@ -182,9 +215,15 @@
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
 }
 
-.modal-icon {
-  font-size: 2.5rem;
+.modal-notification-badge {
+  display: inline-block;
+  background-color: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+  padding: 4px 12px;
+  border-radius: 50px;
+  font-size: 0.8rem;
   margin-bottom: 12px;
+  border: 1px solid rgba(239, 68, 68, 0.3);
 }
 
 .modal-content h2 {
@@ -234,21 +273,10 @@
 }
 
 .btn-cancel:hover {
-  color: #f0a7a7;
+  color: #ffffff;
 }
 
 @keyframes fadeInModal {
   from { opacity: 0; transform: scale(0.95); }
   to { opacity: 1; transform: scale(1); }
-}
-/* Page Exit Animation (Fade out at unti-unting lumalaki/lumiliit) */
-.frontpage-wrapper {
-  transition: opacity 0.6s ease-in-out, transform 0.6s ease-in-out;
-  opacity: 1;
-  transform: scale(1);
-}
-
-.frontpage-wrapper.page-leave {
-  opacity: 0;
-  transform: scale(1.02);
 }
