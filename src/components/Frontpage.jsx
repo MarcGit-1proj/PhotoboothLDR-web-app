@@ -59,7 +59,6 @@ export default function Frontpage() {
     } catch (error) {
       console.warn("Camera or Microphone access denied or blocked by overlay, proceeding anyway:", error);
     } finally {
-      // Kahit ma-allow o ma-deny, tutuloy pa rin sa susunod na page nang hindi nahihirapan ang user
       setShowPermissionModal(false);
       setIsLeaving(true);
       setTimeout(() => {
@@ -73,9 +72,8 @@ export default function Frontpage() {
       <div className="frontpage-content">
         <div className="frontpage-badge"> Long-Distance Connection...</div>
         
-        {/* Welcome text casing updated */}
         <p className="welcome-text">Welcome to</p>
-        <h1 className="frontpage-title">SnapSync</h1>
+        <h1 className="frontpage-title">Snap<span className="title-sync">Sync</span></h1>
 
         {/* Quotes Box */}
         <div className="frontpage-features quotes-box">

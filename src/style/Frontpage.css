@@ -39,14 +39,13 @@
   border: 1px solid rgba(192, 132, 252, 0.25);
   padding: 45px 50px;
   border-radius: 24px;
-  /* Pinalambot ang box-shadow para sa mas banayad at hindi masakit sa matang violet glow */
   box-shadow: 0 25px 50px rgba(0, 0, 0, 0.7), 0 0 30px rgba(192, 132, 252, 0.12);
   max-width: 520px;
   width: 90%;
   text-align: center;
 }
 
-/* Badge (Naayos para laging magkatabi ang text at animated dots) */
+/* Badge */
 .frontpage-badge {
   display: inline-flex;
   align-items: center;
@@ -61,29 +60,6 @@
   margin-bottom: 16px;
   border: 1px solid rgba(239, 68, 68, 0.3);
   white-space: nowrap;
-}
-
-/* Dot Animation */
-.dot-animation {
-  display: inline-flex;
-}
-
-.dot-animation span {
-  animation: blink 1.4s infinite both;
-}
-
-.dot-animation span:nth-child(2) {
-  animation-delay: 0.2s;
-}
-
-.dot-animation span:nth-child(3) {
-  animation-delay: 0.4s;
-}
-
-@keyframes blink {
-  0% { opacity: 0.2; }
-  20% { opacity: 1; }
-  100% { opacity: 0.2; }
 }
 
 /* Welcome Text */
@@ -112,7 +88,7 @@
 }
 
 /* Glowing Quotes Container */
-.quotes-container-glowing {
+.quotes-box {
   padding: 15px 20px;
   margin-bottom: 30px;
   min-height: 80px;
@@ -123,7 +99,7 @@
   position: relative;
 }
 
-/* Quote Text Style na may Violet/Pink Glow Effect */
+/* Quote Text Style */
 .quote-text {
   font-size: 1rem;
   color: #f3f4f6;
