@@ -207,7 +207,6 @@ export default function MainPage() {
             <span key={onlineCount} style={{ display: 'inline-block', animation: 'onlineCountPop 0.35s ease-out' }}>
               {onlineCount}
             </span>
-            online
           </div>
 
           <div className="burger-menu-container">
