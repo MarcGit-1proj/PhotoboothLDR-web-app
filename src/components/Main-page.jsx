@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../style/Main-page.css';
 
@@ -15,24 +15,7 @@ export default function MainPage() {
 
   // Settings States
   const [isLightMode, setIsLightMode] = useState(false);
-  const [soundEnabled, setSoundEnabled] = useState(true);
   const [autoReconnect, setAutoReconnect] = useState(true);
-
-  // Music Player States
-  const [isPlayingMusic, setIsPlayingMusic] = useState(false);
-  const audioRef = useRef(null);
-
-  const toggleMusic = () => {
-    if (audioRef.current) {
-      if (isPlayingMusic) {
-        audioRef.current.pause();
-        setIsPlayingMusic(false);
-      } else {
-        audioRef.current.play().catch(e => console.log("Audio play blocked:", e));
-        setIsPlayingMusic(true);
-      }
-    }
-  };
 
   // 30 Simple Feature Quotes
   const quotes = [
@@ -93,11 +76,6 @@ export default function MainPage() {
       document.body.classList.remove('light-mode');
     }
 
-    const savedSound = localStorage.getItem('snapsync_sound');
-    if (savedSound !== null) {
-      setSoundEnabled(savedSound === 'true');
-    }
-
     const savedReconnect = localStorage.getItem('snapsync_reconnect');
     if (savedReconnect !== null) {
       setAutoReconnect(savedReconnect === 'true');
@@ -114,12 +92,6 @@ export default function MainPage() {
       document.body.classList.remove('light-mode');
       localStorage.setItem('snapsync_theme', 'dark');
     }
-  };
-
-  const handleSoundToggle = () => {
-    const newSound = !soundEnabled;
-    setSoundEnabled(newSound);
-    localStorage.setItem('snapsync_sound', newSound);
   };
 
   const handleReconnectToggle = () => {
@@ -158,33 +130,6 @@ export default function MainPage() {
 
   return (
     <div className={`main-page-wrapper ${isTransitioning ? 'page-transitioning' : ''}`}>
-      
-      {/* Background Audio Element */}
-      <audio ref={audioRef} src="/bg-music.mp3" loop />
-
-      {/* Floating Music Control Button */}
-      <div style={{ position: 'fixed', bottom: '20px', right: '20px', zIndex: 999 }}>
-        <button 
-          onClick={toggleMusic}
-          style={{
-            background: '#18181b',
-            border: '1px solid rgba(255, 255, 255, 0.1)',
-            color: isPlayingMusic ? '#ff4d4d' : '#a1a1aa',
-            borderRadius: '50%',
-            width: '48px',
-            height: '48px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            cursor: 'pointer',
-            boxShadow: '0 4px 15px rgba(0,0,0,0.4)',
-            transition: 'all 0.2s ease'
-          }}
-          title={isPlayingMusic ? "Mute Music" : "Play Music"}
-        >
-          {isPlayingMusic ? '🎵' : '🔇'}
-        </button>
-      </div>
 
       {/* Top Header */}
       <header className="main-header">
@@ -419,16 +364,6 @@ export default function MainPage() {
                 </div>
                 <button className={`setting-toggle-btn ${isLightMode ? 'active' : ''}`} onClick={handleThemeToggle}>
                   {isLightMode ? 'On' : 'Off'}
-                </button>
-              </div>
-
-              <div className="setting-item">
-                <div className="setting-label">
-                  <span>App Sounds</span>
-                  <p>Play audio cues for chats & actions</p>
-                </div>
-                <button className={`setting-toggle-btn ${soundEnabled ? 'active' : ''}`} onClick={handleSoundToggle}>
-                  {soundEnabled ? 'On' : 'Off'}
                 </button>
               </div>
 
