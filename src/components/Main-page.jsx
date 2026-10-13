@@ -17,6 +17,34 @@ export default function MainPage() {
   const [isLightMode, setIsLightMode] = useState(false);
   const [autoReconnect, setAutoReconnect] = useState(true);
 
+  // Simulated online users: drops every 30 seconds, rises every 20 seconds, repeating
+  const [onlineCount, setOnlineCount] = useState(56);
+
+  useEffect(() => {
+    const MIN = 40;
+    const MAX = 90;
+    const rand = (a, b) => Math.floor(Math.random() * (b - a + 1)) + a;
+    let current = 56;
+
+    const change = (delta) => {
+      const next = Math.min(MAX, Math.max(MIN, current + delta));
+      if (next === current) return;
+      current = next;
+      setOnlineCount(current);
+    };
+
+    // every 30 seconds: drops a little
+    const dropInterval = setInterval(() => change(-rand(1, 3)), 30000);
+
+    // every 20 seconds: rises a little
+    const riseInterval = setInterval(() => change(rand(1, 2)), 20000);
+
+    return () => {
+      clearInterval(dropInterval);
+      clearInterval(riseInterval);
+    };
+  }, []);
+
   // 30 Simple Feature Quotes
   const quotes = [
     "Want to play and have fun? Go to Mini Games",
@@ -141,7 +169,47 @@ export default function MainPage() {
           <p>Capture memories across the distance</p>
         </div>
 
-        <div className="header-right">
+        <div className="header-right" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          {/* Online Users Indicator */}
+          <style>{`
+            @keyframes onlineCountPop {
+              0% { transform: translateY(-5px); opacity: 0.3; }
+              100% { transform: translateY(0); opacity: 1; }
+            }
+          `}</style>
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              padding: '8px 14px',
+              borderRadius: '999px',
+              background: 'rgba(34, 197, 94, 0.1)',
+              border: '1px solid rgba(34, 197, 94, 0.35)',
+              color: '#4ade80',
+              fontSize: '13px',
+              fontWeight: 600,
+              whiteSpace: 'nowrap'
+            }}
+            title="Users online now"
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="#22c55e" aria-hidden="true">
+              {/* back-left person */}
+              <circle cx="6" cy="8" r="2.4" opacity="0.65" />
+              <path d="M1 19c0-3 2.2-5 5-5s5 2 5 5z" opacity="0.65" />
+              {/* back-right person */}
+              <circle cx="18" cy="8" r="2.4" opacity="0.65" />
+              <path d="M13 19c0-3 2.2-5 5-5s5 2 5 5z" opacity="0.65" />
+              {/* front person */}
+              <circle cx="12" cy="8.5" r="3" stroke="#150f1c" strokeWidth="1.2" />
+              <path d="M6 21c0-3.6 2.7-6 6-6s6 2.4 6 6z" stroke="#150f1c" strokeWidth="1.2" />
+            </svg>
+            <span key={onlineCount} style={{ display: 'inline-block', animation: 'onlineCountPop 0.35s ease-out' }}>
+              {onlineCount}
+            </span>
+            online
+          </div>
+
           <div className="burger-menu-container">
             <button className={`burger-btn ${menuOpen ? 'open' : ''}`} onClick={handleToggleMenu}>
               {menuOpen && !isClosing ? (
