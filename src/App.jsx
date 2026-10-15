@@ -12,7 +12,6 @@ import PhotoboothDuo from './components/PhotoboothDuo-page';
 import UserProfilePage from './components/Users-profilepage';
 import './style/App.css';
 
-// Kapag hindi naka-login (walang session at hindi guest), ibabalik sa login page.
 function ProtectedRoute({ allowed, children }) {
   return allowed ? children : <Navigate to="/" replace />;
 }
@@ -21,7 +20,6 @@ export default function App() {
   const [session, setSession] = useState(null);
   const [checking, setChecking] = useState(true);
 
-  // Local guest (pansamantala, naka-save sa browser)
   const [guest, setGuest] = useState(
     () => localStorage.getItem('snapsync_guest') === '1'
   );
@@ -33,14 +31,13 @@ export default function App() {
   };
 
   useEffect(() => {
-    // Check kung may naka-save nang login
+
     supabase.auth
       .getSession()
       .then(({ data }) => setSession(data.session))
       .catch(() => setSession(null))
       .finally(() => setChecking(false));
 
-    // Makikinig sa login / logout / guest
     const { data: listener } = supabase.auth.onAuthStateChange((_event, newSession) => {
       setSession(newSession);
     });
@@ -48,7 +45,7 @@ export default function App() {
     return () => listener.subscription.unsubscribe();
   }, []);
 
-  // Habang chine-check pa ang session, dark screen muna (para hindi mag-flash ang login)
+
   if (checking) {
     return <div style={{ minHeight: '100vh', background: '#0d0c10' }} />;
   }
@@ -56,7 +53,7 @@ export default function App() {
   return (
     <Router>
       <Routes>
-        {/* Login muna. Kapag naka-login na, derecho na sa /welcome */}
+      
         <Route
           path="/"
           element={
@@ -68,7 +65,6 @@ export default function App() {
           }
         />
 
-        {/* Frontpage na may "Start Your Connection" */}
         <Route
           path="/welcome"
           element={<ProtectedRoute allowed={isLoggedIn}><Frontpage /></ProtectedRoute>}
