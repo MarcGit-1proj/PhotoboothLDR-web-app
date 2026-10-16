@@ -1,8 +1,99 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../style/Main-page.css';
 
 const APP_VERSION = '1.5.0';
+const COUPLE_STORAGE_KEY = 'snapsync_couple';
+
+const FALLBACK_TIMEZONES = [
+  'Asia/Manila', 'Asia/Tokyo', 'Asia/Seoul', 'Asia/Singapore', 'Asia/Dubai',
+  'Europe/London', 'Europe/Paris', 'America/New_York', 'America/Chicago',
+  'America/Los_Angeles', 'Australia/Sydney', 'Pacific/Auckland'
+];
+
+/* ---------- Helper (online users) ---------- */
+const randInt = (a, b) => Math.floor(Math.random() * (b - a + 1)) + a;
+
+/* ---------- Helpers (couple widgets) ---------- */
+const detectTimezone = () => {
+  try {
+    return Intl.DateTimeFormat().resolvedOptions().timeZone || 'Asia/Manila';
+  } catch {
+    return 'Asia/Manila';
+  }
+};
+
+const getAllTimezones = () => {
+  try {
+    if (typeof Intl.supportedValuesOf === 'function') {
+      return Intl.supportedValuesOf('timeZone');
+    }
+  } catch {
+    /* fall through */
+  }
+  return FALLBACK_TIMEZONES;
+};
+
+const cityFromTz = (tz) => (tz ? tz.split('/').pop().replace(/_/g, ' ') : '');
+
+const formatTime = (date, tz) => {
+  try {
+    return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', timeZone: tz });
+  } catch {
+    return '--:--';
+  }
+};
+
+const startOfDay = (d) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
+
+const parseDateInput = (str) => {
+  if (!str) return null;
+  const [y, m, d] = str.split('-').map(Number);
+  if (!y || !m || !d) return null;
+  return new Date(y, m - 1, d);
+};
+
+const toInputDate = (d) => {
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  return `${d.getFullYear()}-${mm}-${dd}`;
+};
+
+const dayDiff = (a, b) => Math.round((a - b) / 86400000);
+
+const loadCouple = () => {
+  const base = { anniversary: '', myTz: '', partnerTz: '', partnerCity: '', meetDate: '' };
+  try {
+    const raw = localStorage.getItem(COUPLE_STORAGE_KEY);
+    return raw ? { ...base, ...JSON.parse(raw) } : base;
+  } catch {
+    return base;
+  }
+};
+
+/* ---------- Small icon components ---------- */
+const CalendarHeartIcon = ({ size = 24, color = 'currentColor' }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+    <line x1="16" y1="2" x2="16" y2="6"></line>
+    <line x1="8" y1="2" x2="8" y2="6"></line>
+    <line x1="3" y1="10" x2="21" y2="10"></line>
+    <path d="M12 19.2s-2.8-1.8-2.8-3.4a1.5 1.5 0 0 1 2.8-.7 1.5 1.5 0 0 1 2.8.7c0 1.6-2.8 3.4-2.8 3.4z"></path>
+  </svg>
+);
+
+const ClockIcon = ({ size = 24, color = 'currentColor' }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <circle cx="12" cy="12" r="10"></circle>
+    <polyline points="12 6 12 12 16 14"></polyline>
+  </svg>
+);
+
+const HeartIcon = ({ size = 24, color = 'currentColor' }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+  </svg>
+);
 
 export default function MainPage() {
   const navigate = useNavigate();
@@ -18,33 +109,50 @@ export default function MainPage() {
   // Settings States
   const [isLightMode, setIsLightMode] = useState(false);
 
-  // Simulated online users: drops every 30 seconds, rises every 20 seconds, repeating
-  const [onlineCount, setOnlineCount] = useState(56);
+  // Simulated online users: starts at a different random number every time the site is opened,
+  // then drops every 30 seconds and rises every 20 seconds, repeating
+  const [onlineCount, setOnlineCount] = useState(() => randInt(8, 70));
+
+  // Couple widgets (Days Together / Our Time / Next Meet-up)
+  const [couple, setCouple] = useState(loadCouple);
+  const [now, setNow] = useState(() => new Date());
+  const [widgetModal, setWidgetModal] = useState(null); // 'anniversary' | 'timezone' | 'meetup' | null
+  const [draft, setDraft] = useState({});
 
   useEffect(() => {
-    const MIN = 40;
+    const MIN = 5;
     const MAX = 90;
-    const rand = (a, b) => Math.floor(Math.random() * (b - a + 1)) + a;
-    let current = 56;
 
     const change = (delta) => {
-      const next = Math.min(MAX, Math.max(MIN, current + delta));
-      if (next === current) return;
-      current = next;
-      setOnlineCount(current);
+      setOnlineCount((prev) => Math.min(MAX, Math.max(MIN, prev + delta)));
     };
 
     // every 30 seconds: drops a little
-    const dropInterval = setInterval(() => change(-rand(1, 3)), 30000);
+    const dropInterval = setInterval(() => change(-randInt(1, 3)), 30000);
 
     // every 20 seconds: rises a little
-    const riseInterval = setInterval(() => change(rand(1, 2)), 20000);
+    const riseInterval = setInterval(() => change(randInt(1, 2)), 20000);
 
     return () => {
       clearInterval(dropInterval);
       clearInterval(riseInterval);
     };
   }, []);
+
+  // Keep the clocks and day counters fresh
+  useEffect(() => {
+    const tick = setInterval(() => setNow(new Date()), 15000);
+    return () => clearInterval(tick);
+  }, []);
+
+  // Save couple info
+  useEffect(() => {
+    try {
+      localStorage.setItem(COUPLE_STORAGE_KEY, JSON.stringify(couple));
+    } catch {
+      /* storage unavailable, ignore */
+    }
+  }, [couple]);
 
   // 30 Simple Feature Quotes
   const quotes = [
@@ -146,36 +254,160 @@ export default function MainPage() {
     }, 400);
   };
 
+  /* ---------- Couple widgets: derived values ---------- */
+  const myTz = couple.myTz || detectTimezone();
+  const today = startOfDay(now);
+
+  const anniversaryDate = parseDateInput(couple.anniversary);
+  const daysTogether = anniversaryDate ? Math.max(0, dayDiff(today, anniversaryDate)) : null;
+
+  const meetDate = parseDateInput(couple.meetDate);
+  const meetDiff = meetDate ? dayDiff(meetDate, today) : null;
+
+  const myTime = formatTime(now, myTz);
+  const myCity = cityFromTz(myTz);
+  const partnerTime = couple.partnerTz ? formatTime(now, couple.partnerTz) : null;
+  const partnerCity = couple.partnerCity || cityFromTz(couple.partnerTz);
+
+  let meetValue = 'Set date';
+  if (meetDiff !== null) {
+    if (meetDiff > 1) meetValue = `${meetDiff} days`;
+    else if (meetDiff === 1) meetValue = '1 day';
+    else if (meetDiff === 0) meetValue = 'Today!';
+    else meetValue = 'Pick new date';
+  }
+
+  const togetherValue = daysTogether !== null
+    ? `${daysTogether} ${daysTogether === 1 ? 'day' : 'days'}`
+    : 'Set date';
+
+  const allTimezones = useMemo(() => getAllTimezones(), []);
+
+  const renderTzOptions = (current) => {
+    const list = current && !allTimezones.includes(current) ? [current, ...allTimezones] : allTimezones;
+    return list.map((tz) => (
+      <option key={tz} value={tz}>{tz.replace(/_/g, ' ')}</option>
+    ));
+  };
+
+  /* ---------- Couple widgets: popup handlers ---------- */
+  const openWidgetModal = (type) => {
+    setDraft({
+      anniversary: couple.anniversary,
+      meetDate: couple.meetDate,
+      myTz,
+      partnerTz: couple.partnerTz,
+      partnerCity: couple.partnerCity
+    });
+    setWidgetModal(type);
+  };
+
+  const closeWidgetModal = () => setWidgetModal(null);
+
+  const updateDraft = (patch) => setDraft((prev) => ({ ...prev, ...patch }));
+
+  const handleWidgetSave = () => {
+    if (widgetModal === 'anniversary') {
+      setCouple((prev) => ({ ...prev, anniversary: draft.anniversary || '' }));
+    } else if (widgetModal === 'meetup') {
+      setCouple((prev) => ({ ...prev, meetDate: draft.meetDate || '' }));
+    } else if (widgetModal === 'timezone') {
+      setCouple((prev) => ({
+        ...prev,
+        myTz: draft.myTz || detectTimezone(),
+        partnerTz: draft.partnerTz || '',
+        partnerCity: (draft.partnerCity || '').trim()
+      }));
+    }
+    closeWidgetModal();
+  };
+
+  const handleWidgetClear = () => {
+    if (widgetModal === 'anniversary') {
+      setCouple((prev) => ({ ...prev, anniversary: '' }));
+    } else if (widgetModal === 'meetup') {
+      setCouple((prev) => ({ ...prev, meetDate: '' }));
+    } else if (widgetModal === 'timezone') {
+      setCouple((prev) => ({ ...prev, partnerTz: '', partnerCity: '' }));
+    }
+    closeWidgetModal();
+  };
+
   return (
     <div className={`main-page-wrapper ${isTransitioning ? 'page-transitioning' : ''}`}>
 
       {/* Top Header */}
       <header className="main-header">
         <div className="header-brand">
-          <h1>
-            <span className="brand-snap">Snap</span>
-            <span className="brand-sync">Sync</span>
-          </h1>
+          <div className="brand-row">
+            <h1>
+              <span className="brand-snap">Snap</span>
+              <span className="brand-sync">Sync</span>
+            </h1>
+
+            {/* Online Users Indicator */}
+            <div className="online-badge" title="Users online now">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="#22c55e" aria-hidden="true">
+                {/* back-left person */}
+                <circle cx="6" cy="8" r="2.4" opacity="0.65" />
+                <path d="M1 19c0-3 2.2-5 5-5s5 2 5 5z" opacity="0.65" />
+                {/* back-right person */}
+                <circle cx="18" cy="8" r="2.4" opacity="0.65" />
+                <path d="M13 19c0-3 2.2-5 5-5s5 2 5 5z" opacity="0.65" />
+                {/* front person */}
+                <circle cx="12" cy="8.5" r="3" stroke="#150f1c" strokeWidth="1.2" />
+                <path d="M6 21c0-3.6 2.7-6 6-6s6 2.4 6 6z" stroke="#150f1c" strokeWidth="1.2" />
+              </svg>
+              <span key={onlineCount} className="online-count">
+                {onlineCount}
+              </span>
+            </div>
+          </div>
           <p>Capture memories across the distance</p>
         </div>
 
         <div className="header-right">
-          {/* Online Users Indicator */}
-          <div className="online-badge" title="Users online now">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="#22c55e" aria-hidden="true">
-              {/* back-left person */}
-              <circle cx="6" cy="8" r="2.4" opacity="0.65" />
-              <path d="M1 19c0-3 2.2-5 5-5s5 2 5 5z" opacity="0.65" />
-              {/* back-right person */}
-              <circle cx="18" cy="8" r="2.4" opacity="0.65" />
-              <path d="M13 19c0-3 2.2-5 5-5s5 2 5 5z" opacity="0.65" />
-              {/* front person */}
-              <circle cx="12" cy="8.5" r="3" stroke="#150f1c" strokeWidth="1.2" />
-              <path d="M6 21c0-3.6 2.7-6 6-6s6 2.4 6 6z" stroke="#150f1c" strokeWidth="1.2" />
-            </svg>
-            <span key={onlineCount} className="online-count">
-              {onlineCount}
-            </span>
+          {/* Couple Widgets: Days Together / Our Time / Next Meet-up */}
+          <div className="header-widgets">
+            {/* Days Together */}
+            <button className="widget-chip" title="Edit anniversary" onClick={() => openWidgetModal('anniversary')}>
+              <span className="widget-chip-icon"><CalendarHeartIcon size={18} /></span>
+              <span className="widget-chip-body">
+                <span className="widget-chip-label">Days Together</span>
+                <span className="widget-chip-value">{togetherValue}</span>
+              </span>
+            </button>
+
+            {/* Our Time */}
+            <button className="widget-chip" title="Edit time zones" onClick={() => openWidgetModal('timezone')}>
+              <span className="widget-chip-icon"><ClockIcon size={18} /></span>
+              <span className="widget-chip-body">
+                <span className="widget-chip-label">Our Time</span>
+                <span className="widget-time-row">
+                  <span className="widget-chip-value">{myTime}</span>
+                  <span className="widget-city">{myCity}</span>
+                </span>
+                <span className="widget-time-row">
+                  {partnerTime ? (
+                    <>
+                      <span className="widget-chip-value">{partnerTime}</span>
+                      <span className="widget-city">{partnerCity}</span>
+                    </>
+                  ) : (
+                    <span className="widget-city">Set partner's time</span>
+                  )}
+                </span>
+              </span>
+            </button>
+
+            {/* Next Meet-up */}
+            <button className="widget-chip" title="Edit meet-up date" onClick={() => openWidgetModal('meetup')}>
+              <span className="widget-chip-icon"><HeartIcon size={18} /></span>
+              <span className="widget-chip-body">
+                <span className="widget-chip-label">Next Meet-up</span>
+                <span className="widget-chip-value">{meetValue}</span>
+              </span>
+            </button>
           </div>
 
           <div className="burger-menu-container">
@@ -208,6 +440,7 @@ export default function MainPage() {
 
       {/* Main Content / Features Grid (Live Call at Photobooth ay magkatabi na) */}
       <main className="main-content-area">
+
         <div className="feature-quote-wrapper">
           <p className={`feature-quote-text ${fade ? 'visible' : 'hidden'}`}>
             {quotes[currentQuoteIndex]}
@@ -317,6 +550,94 @@ export default function MainPage() {
         </div>
       </main>
 
+      {/* Couple Widget Popup (Anniversary / Time Zones / Next Meet-up) */}
+      {widgetModal && (
+        <div className="modal-overlay" onClick={closeWidgetModal}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-icon">
+              {widgetModal === 'anniversary' && <CalendarHeartIcon size={32} color="#ff4d4d" />}
+              {widgetModal === 'timezone' && <ClockIcon size={32} color="#ff4d4d" />}
+              {widgetModal === 'meetup' && <HeartIcon size={32} color="#ff4d4d" />}
+            </div>
+
+            {widgetModal === 'anniversary' && (
+              <>
+                <h2>ANNIVERSARY</h2>
+                <p className="modal-text">When did your story begin? We'll count the days together.</p>
+                <div className="modal-form">
+                  <label className="modal-field">
+                    <span>Anniversary date</span>
+                    <input
+                      type="date"
+                      value={draft.anniversary || ''}
+                      max={toInputDate(today)}
+                      onChange={(e) => updateDraft({ anniversary: e.target.value })}
+                    />
+                  </label>
+                </div>
+              </>
+            )}
+
+            {widgetModal === 'timezone' && (
+              <>
+                <h2>TIME ZONES</h2>
+                <p className="modal-text">See each other's local time at a glance.</p>
+                <div className="modal-form">
+                  <label className="modal-field">
+                    <span>Your timezone</span>
+                    <select value={draft.myTz || ''} onChange={(e) => updateDraft({ myTz: e.target.value })}>
+                      {renderTzOptions(draft.myTz)}
+                    </select>
+                  </label>
+                  <label className="modal-field">
+                    <span>Partner's timezone</span>
+                    <select value={draft.partnerTz || ''} onChange={(e) => updateDraft({ partnerTz: e.target.value })}>
+                      <option value="">Select timezone</option>
+                      {renderTzOptions(draft.partnerTz)}
+                    </select>
+                  </label>
+                  <label className="modal-field">
+                    <span>Partner's city name (optional)</span>
+                    <input
+                      type="text"
+                      maxLength={30}
+                      placeholder="e.g. Tokyo"
+                      value={draft.partnerCity || ''}
+                      onChange={(e) => updateDraft({ partnerCity: e.target.value })}
+                    />
+                  </label>
+                </div>
+              </>
+            )}
+
+            {widgetModal === 'meetup' && (
+              <>
+                <h2>NEXT MEET-UP</h2>
+                <p className="modal-text">Pick the day you two finally see each other.</p>
+                <div className="modal-form">
+                  <label className="modal-field">
+                    <span>Meet-up date</span>
+                    <input
+                      type="date"
+                      value={draft.meetDate || ''}
+                      min={toInputDate(today)}
+                      onChange={(e) => updateDraft({ meetDate: e.target.value })}
+                    />
+                  </label>
+                </div>
+              </>
+            )}
+
+            <div className="modal-actions">
+              <button className="modal-secondary-btn" onClick={handleWidgetClear}>
+                {widgetModal === 'timezone' ? 'Clear partner' : 'Clear'}
+              </button>
+              <button className="modal-close-btn" onClick={handleWidgetSave}>Save</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* About Modal */}
       {showAboutModal && (
         <div className="modal-overlay" onClick={() => setShowAboutModal(false)}>
@@ -385,7 +706,7 @@ export default function MainPage() {
         <div className="modal-overlay" onClick={() => setShowSettingsModal(false)}>
           <div className="modal-content settings-modal-content" onClick={(e) => e.stopPropagation()}>
             <div className="modal-icon">
-              <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#fe3434" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#ff4d4d" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <circle cx="12" cy="12" r="3"></circle>
                 <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06-.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
               </svg>
