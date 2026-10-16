@@ -2,12 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../style/Main-page.css';
 
+const APP_VERSION = '1.5.0';
+
 export default function MainPage() {
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
   const [isTransitioning, setIsTransitioning] = useState(false);
-  
+
   const [showAboutModal, setShowAboutModal] = useState(false);
   const [showContactModal, setShowContactModal] = useState(false);
   const [showDeveloperModal, setShowDeveloperModal] = useState(false);
@@ -15,7 +17,6 @@ export default function MainPage() {
 
   // Settings States
   const [isLightMode, setIsLightMode] = useState(false);
-  const [autoReconnect, setAutoReconnect] = useState(true);
 
   // Simulated online users: drops every 30 seconds, rises every 20 seconds, repeating
   const [onlineCount, setOnlineCount] = useState(56);
@@ -103,11 +104,6 @@ export default function MainPage() {
       setIsLightMode(false);
       document.body.classList.remove('light-mode');
     }
-
-    const savedReconnect = localStorage.getItem('snapsync_reconnect');
-    if (savedReconnect !== null) {
-      setAutoReconnect(savedReconnect === 'true');
-    }
   }, []);
 
   const handleThemeToggle = () => {
@@ -120,12 +116,6 @@ export default function MainPage() {
       document.body.classList.remove('light-mode');
       localStorage.setItem('snapsync_theme', 'dark');
     }
-  };
-
-  const handleReconnectToggle = () => {
-    const newReconnect = !autoReconnect;
-    setAutoReconnect(newReconnect);
-    localStorage.setItem('snapsync_reconnect', newReconnect);
   };
 
   const handleToggleMenu = () => {
@@ -169,30 +159,9 @@ export default function MainPage() {
           <p>Capture memories across the distance</p>
         </div>
 
-        <div className="header-right" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+        <div className="header-right">
           {/* Online Users Indicator */}
-          <style>{`
-            @keyframes onlineCountPop {
-              0% { transform: translateY(-5px); opacity: 0.3; }
-              100% { transform: translateY(0); opacity: 1; }
-            }
-          `}</style>
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              padding: '8px 14px',
-              borderRadius: '999px',
-              background: 'rgba(34, 197, 94, 0.1)',
-              border: '1px solid rgba(34, 197, 94, 0.35)',
-              color: '#4ade80',
-              fontSize: '13px',
-              fontWeight: 600,
-              whiteSpace: 'nowrap'
-            }}
-            title="Users online now"
-          >
+          <div className="online-badge" title="Users online now">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="#22c55e" aria-hidden="true">
               {/* back-left person */}
               <circle cx="6" cy="8" r="2.4" opacity="0.65" />
@@ -204,7 +173,7 @@ export default function MainPage() {
               <circle cx="12" cy="8.5" r="3" stroke="#150f1c" strokeWidth="1.2" />
               <path d="M6 21c0-3.6 2.7-6 6-6s6 2.4 6 6z" stroke="#150f1c" strokeWidth="1.2" />
             </svg>
-            <span key={onlineCount} style={{ display: 'inline-block', animation: 'onlineCountPop 0.35s ease-out' }}>
+            <span key={onlineCount} className="online-count">
               {onlineCount}
             </span>
           </div>
@@ -261,7 +230,7 @@ export default function MainPage() {
           </button>
 
           {/* 2. Photobooth - ACTIVE (Inilipat para maging katabi ng Live Call) */}
-          <div className="menu-card-wrapper" style={{ position: 'relative' }}>
+          <div className="menu-card-wrapper">
             <span className="pulsing-badge">Most Visited</span>
             <button className="menu-card photobooth-highlight" onClick={() => handleFeatureNavigate('/photobooth')}>
               <div className="card-icon-wrapper">
@@ -351,7 +320,7 @@ export default function MainPage() {
       {/* About Modal */}
       {showAboutModal && (
         <div className="modal-overlay" onClick={() => setShowAboutModal(false)}>
-          <div className="modal-content about-modal-content" onClick={(e) => e.stopPropagation()} style={{ maxHeight: '85vh', display: 'flex', flexDirection: 'column' }}>
+          <div className="modal-content about-modal-content" onClick={(e) => e.stopPropagation()}>
             <div className="modal-icon">
               <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#ff4d4d" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <circle cx="12" cy="12" r="10"></circle>
@@ -360,7 +329,7 @@ export default function MainPage() {
               </svg>
             </div>
             <h2>ABOUT</h2>
-            <div className="about-scrollable-body" style={{ overflowY: 'auto', paddingRight: '4px', textAlign: 'left', marginBottom: '20px' }}>
+            <div className="about-scrollable-body">
               <p className="modal-text">
                 <span className="modal-highlight">SnapSync</span> is a web application designed to help long-distance partners connect through shared moments, real-time communication, and interactive memories.
               </p>
@@ -422,8 +391,9 @@ export default function MainPage() {
               </svg>
             </div>
             <h2>SETTINGS</h2>
-            
+
             <div className="settings-options-list">
+              {/* Light Mode */}
               <div className="setting-item">
                 <div className="setting-label">
                   <span>Light Mode</span>
@@ -434,14 +404,29 @@ export default function MainPage() {
                 </button>
               </div>
 
+              {/* Version */}
               <div className="setting-item">
                 <div className="setting-label">
-                  <span>Auto-Reconnect Call</span>
-                  <p>Attempt to reconnect peer if dropped</p>
+                  <span>Version</span>
+                  <p>Current website version</p>
                 </div>
-                <button className={`setting-toggle-btn ${autoReconnect ? 'active' : ''}`} onClick={handleReconnectToggle}>
-                  {autoReconnect ? 'On' : 'Off'}
-                </button>
+                <span className="setting-toggle-btn active version-badge">
+                  v{APP_VERSION}
+                </span>
+              </div>
+
+              {/* Future Updates */}
+              <div className="setting-item future-updates">
+                <div className="setting-label">
+                  <span>Future Updates</span>
+                  <p>What's coming to SnapSync</p>
+                </div>
+                <ul className="future-updates-list">
+                  <li><b>Messages</b> – chat with your partner using the same Code ID.</li>
+                  <li><b>Mini Games</b> – play together, connected through Code ID.</li>
+                  <li><b>Premium Plan</b> – unlock beautiful photobooth strip designs, faster connection, unlimited ID generation, and customizable music and background.</li>
+                  <li><b>Music Room</b> – sing together with your partner.</li>
+                </ul>
               </div>
             </div>
 
