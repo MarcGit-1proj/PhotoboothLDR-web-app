@@ -10,6 +10,7 @@ import PhotoboothPage from './components/Photobooth-page';
 import PhotoboothSoloPage from './components/Photoboothsolo-page';
 import PhotoboothDuo from './components/PhotoboothDuo-page';
 import UserProfilePage from './components/Users-profilepage';
+import NicknameModal from './components/NicknameModal';
 import './style/App.css';
 
 function ProtectedRoute({ allowed, children }) {
@@ -25,6 +26,28 @@ export default function App() {
   );
   const isLoggedIn = !!session || guest;
 
+  const user = session?.user ?? null;
+  // Ang "Continue without account" ay gumagawa ng anonymous Supabase user,
+  // kaya hindi natin ito ituturing na totoong naka-login
+  const isRealUser = !!user && !user.is_anonymous;
+
+  // Nickname popup: lalabas pagkatapos mag-login kung wala pang nickname
+  const [nickSkipped, setNickSkipped] = useState(
+    () => sessionStorage.getItem('snapsync_nick_skip') === '1'
+  );
+  const needsNickname = isRealUser && !user.user_metadata?.nickname && !nickSkipped;
+
+  const handleNicknameDone = (updatedUser) => {
+    if (updatedUser) {
+      setSession((prev) => (prev ? { ...prev, user: updatedUser } : prev));
+    }
+  };
+
+  const handleNicknameSkip = () => {
+    sessionStorage.setItem('snapsync_nick_skip', '1');
+    setNickSkipped(true);
+  };
+
   const handleGuest = () => {
     localStorage.setItem('snapsync_guest', '1');
     setGuest(true);
@@ -39,6 +62,8 @@ export default function App() {
       /* ignore */
     }
     localStorage.removeItem('snapsync_guest');
+    sessionStorage.removeItem('snapsync_nick_skip');
+    setNickSkipped(false);
     setGuest(false);
     setSession(null);
   };
@@ -87,7 +112,7 @@ export default function App() {
           path="/main"
           element={
             <ProtectedRoute allowed={isLoggedIn}>
-              <MainPage user={session?.user ?? null} onLogout={handleLogout} />
+              <MainPage user={isRealUser ? user : null} onLogout={handleLogout} />
             </ProtectedRoute>
           }
         />
@@ -116,6 +141,14 @@ export default function App() {
           element={<ProtectedRoute allowed={isLoggedIn}><UserProfilePage /></ProtectedRoute>}
         />
       </Routes>
+
+      {needsNickname && (
+        <NicknameModal
+          user={user}
+          onDone={handleNicknameDone}
+          onSkip={handleNicknameSkip}
+        />
+      )}
     </Router>
   );
 }
