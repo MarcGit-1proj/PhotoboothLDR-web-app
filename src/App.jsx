@@ -30,6 +30,19 @@ export default function App() {
     setGuest(true);
   };
 
+  // Log out (naka-login) o Log in (guest): kapag nawala ang session/guest,
+  // ibabalik ng ProtectedRoute sa login page ("/")
+  const handleLogout = async () => {
+    try {
+      await supabase.auth.signOut();
+    } catch {
+      /* ignore */
+    }
+    localStorage.removeItem('snapsync_guest');
+    setGuest(false);
+    setSession(null);
+  };
+
   useEffect(() => {
 
     supabase.auth
@@ -72,7 +85,11 @@ export default function App() {
 
         <Route
           path="/main"
-          element={<ProtectedRoute allowed={isLoggedIn}><MainPage /></ProtectedRoute>}
+          element={
+            <ProtectedRoute allowed={isLoggedIn}>
+              <MainPage user={session?.user ?? null} onLogout={handleLogout} />
+            </ProtectedRoute>
+          }
         />
         <Route
           path="/live-call"
