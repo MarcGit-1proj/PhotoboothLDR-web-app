@@ -4,6 +4,8 @@ import '../style/Main-page.css';
 
 const APP_VERSION = '1.5.0';
 const COUPLE_STORAGE_KEY = 'snapsync_couple';
+// Palitan kung ibang key/paraan ang ginagamit ng Login-page.jsx
+const USER_STORAGE_KEY = 'snapsync_user';
 
 const FALLBACK_TIMEZONES = [
   'Asia/Manila', 'Asia/Tokyo', 'Asia/Seoul', 'Asia/Singapore', 'Asia/Dubai',
@@ -71,6 +73,16 @@ const loadCouple = () => {
   }
 };
 
+/* ---------- Helper (logged-in user) ---------- */
+const loadUser = () => {
+  try {
+    const raw = localStorage.getItem(USER_STORAGE_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+};
+
 /* ---------- Small icon components ---------- */
 const CalendarHeartIcon = ({ size = 24, color = 'currentColor' }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -108,6 +120,9 @@ export default function MainPage() {
 
   // Settings States
   const [isLightMode, setIsLightMode] = useState(false);
+
+  // Logged-in user (null kapag walang account / "Continue without account")
+  const [currentUser, setCurrentUser] = useState(loadUser);
 
   // Simulated online users: starts at a different random number every time the site is opened,
   // then drops every 30 seconds and rises every 20 seconds, repeating
@@ -246,6 +261,31 @@ export default function MainPage() {
       modalSetter(true);
     }, 200);
   };
+
+  // Isara muna ang menu, tapos gawin ang action (login / logout)
+  const closeMenuThen = (action) => {
+    setIsClosing(true);
+    setTimeout(() => {
+      setMenuOpen(false);
+      setIsClosing(false);
+      action();
+    }, 200);
+  };
+
+  const handleLogin = () => closeMenuThen(() => navigate('/login'));
+
+  const handleLogout = () =>
+    closeMenuThen(() => {
+      // Kung Firebase: await signOut(auth);
+      // Kung Supabase: await supabase.auth.signOut();
+      try {
+        localStorage.removeItem(USER_STORAGE_KEY);
+      } catch {
+        /* ignore */
+      }
+      setCurrentUser(null);
+      navigate('/login');
+    });
 
   const handleFeatureNavigate = (path) => {
     setIsTransitioning(true);
@@ -432,6 +472,14 @@ export default function MainPage() {
                 <button onClick={() => closeMenuAndOpenModal(setShowContactModal)}>Contact</button>
                 <button onClick={() => closeMenuAndOpenModal(setShowDeveloperModal)}>Developer</button>
                 <button onClick={() => closeMenuAndOpenModal(setShowSettingsModal)}>Settings</button>
+
+                <div className="dropdown-divider" />
+
+                {currentUser ? (
+                  <button className="dropdown-logout" onClick={handleLogout}>Log out</button>
+                ) : (
+                  <button className="dropdown-login" onClick={handleLogin}>Log in</button>
+                )}
               </div>
             )}
           </div>
