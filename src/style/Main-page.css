@@ -992,3 +992,60 @@ body.light-mode .modal-secondary-btn {
 body.light-mode .modal-secondary-btn:hover {
   background: rgba(0, 0, 0, 0.1);
 }
+/* --- Burger Menu Login Notification Tip --- */
+.burger-menu-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.login-tip-badge {
+  position: absolute;
+  right: 60px;
+  background: linear-gradient(135deg, #ff4d4d, #f43f5e);
+  color: #ffffff;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  white-space: nowrap;
+  box-shadow: 0 4px 15px rgba(255, 77, 77, 0.4);
+  animation: tipFadeBounce 1.5s infinite alternate ease-in-out;
+  pointer-events: none;
+  z-index: 10;
+}
+
+.tip-arrow {
+  position: absolute;
+  top: 50%;
+  right: -5px;
+  transform: translateY(-50%);
+  width: 0;
+  height: 0;
+  border-top: 6px solid transparent;
+  border-bottom: 6px solid transparent;
+  border-left: 6px solid #f43f5e;
+}
+
+.glowing-burger {
+  animation: burgerGlow 1.5s infinite alternate ease-in-out;
+  border-color: #ff4d4d !important;
+}
+
+@keyframes burgerGlow {
+  0% {
+    box-shadow: 0 0 5px rgba(255, 77, 77, 0.4), inset 0 0 5px rgba(255, 77, 77, 0.2);
+  }
+  100% {
+    box-shadow: 0 0 20px rgba(255, 77, 77, 0.8), inset 0 0 10px rgba(255, 77, 77, 0.5);
+  }
+}
+
+@keyframes tipFadeBounce {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-5px);
+  }
+}

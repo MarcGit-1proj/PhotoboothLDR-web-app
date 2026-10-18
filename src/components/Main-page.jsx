@@ -95,30 +95,36 @@ const HeartIcon = ({ size = 24, color = 'currentColor' }) => (
   </svg>
 );
 
-// user: Supabase user (null kapag guest) | onLogout: galing sa App.jsx
 export default function MainPage({ user, onLogout }) {
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
   const [isTransitioning, setIsTransitioning] = useState(false);
 
+  const [showLoginTip, setShowLoginTip] = useState(false);
+
   const [showAboutModal, setShowAboutModal] = useState(false);
   const [showContactModal, setShowContactModal] = useState(false);
   const [showDeveloperModal, setShowDeveloperModal] = useState(false);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
 
-  // Settings States
   const [isLightMode, setIsLightMode] = useState(false);
-
-  // Simulated online users: starts at a different random number every time the site is opened,
-  // then drops every 30 seconds and rises every 20 seconds, repeating
   const [onlineCount, setOnlineCount] = useState(() => randInt(8, 70));
 
-  // Couple widgets (Days Together / Our Time / Next Meet-up)
   const [couple, setCouple] = useState(loadCouple);
   const [now, setNow] = useState(() => new Date());
-  const [widgetModal, setWidgetModal] = useState(null); // 'anniversary' | 'timezone' | 'meetup' | null
+  const [widgetModal, setWidgetModal] = useState(null);
   const [draft, setDraft] = useState({});
+
+  useEffect(() => {
+    if (!user) {
+      setShowLoginTip(true);
+      const timer = setTimeout(() => {
+        setShowLoginTip(false);
+      }, 14000);
+      return () => clearTimeout(timer);
+    }
+  }, [user]);
 
   useEffect(() => {
     const MIN = 5;
@@ -128,10 +134,7 @@ export default function MainPage({ user, onLogout }) {
       setOnlineCount((prev) => Math.min(MAX, Math.max(MIN, prev + delta)));
     };
 
-    // every 30 seconds: drops a little
     const dropInterval = setInterval(() => change(-randInt(1, 3)), 30000);
-
-    // every 20 seconds: rises a little
     const riseInterval = setInterval(() => change(randInt(1, 2)), 20000);
 
     return () => {
@@ -140,13 +143,11 @@ export default function MainPage({ user, onLogout }) {
     };
   }, []);
 
-  // Keep the clocks and day counters fresh
   useEffect(() => {
     const tick = setInterval(() => setNow(new Date()), 15000);
     return () => clearInterval(tick);
   }, []);
 
-  // Save couple info
   useEffect(() => {
     try {
       localStorage.setItem(COUPLE_STORAGE_KEY, JSON.stringify(couple));
@@ -155,7 +156,6 @@ export default function MainPage({ user, onLogout }) {
     }
   }, [couple]);
 
-  // 30 Simple Feature Quotes
   const quotes = [
     "Want to play and have fun? Go to Mini Games",
     "Want to talk or see each other? Jump into a Live Call",
@@ -215,19 +215,9 @@ export default function MainPage({ user, onLogout }) {
     }
   }, []);
 
-  const handleThemeToggle = () => {
-    const newLightMode = !isLightMode;
-    setIsLightMode(newLightMode);
-    if (newLightMode) {
-      document.body.classList.add('light-mode');
-      localStorage.setItem('snapsync_theme', 'light');
-    } else {
-      document.body.classList.remove('light-mode');
-      localStorage.setItem('snapsync_theme', 'dark');
-    }
-  };
-
   const handleToggleMenu = () => {
+    if (showLoginTip) setShowLoginTip(false);
+
     if (menuOpen) {
       setIsClosing(true);
       setTimeout(() => {
@@ -248,7 +238,6 @@ export default function MainPage({ user, onLogout }) {
     }, 200);
   };
 
-  // Isara muna ang menu, tapos gawin ang action (login / logout)
   const closeMenuThen = (action) => {
     setIsClosing(true);
     setTimeout(() => {
@@ -258,7 +247,6 @@ export default function MainPage({ user, onLogout }) {
     }, 200);
   };
 
-  // Log out (naka-login) o Log in (guest): App.jsx ang nag-aasikaso, ibabalik sa login page
   const handleAuthClick = () => closeMenuThen(() => onLogout && onLogout());
 
   const handleFeatureNavigate = (path) => {
@@ -268,7 +256,6 @@ export default function MainPage({ user, onLogout }) {
     }, 400);
   };
 
-  /* ---------- Couple widgets: derived values ---------- */
   const myTz = couple.myTz || detectTimezone();
   const today = startOfDay(now);
 
@@ -304,7 +291,6 @@ export default function MainPage({ user, onLogout }) {
     ));
   };
 
-  /* ---------- Couple widgets: popup handlers ---------- */
   const openWidgetModal = (type) => {
     setDraft({
       anniversary: couple.anniversary,
@@ -317,7 +303,6 @@ export default function MainPage({ user, onLogout }) {
   };
 
   const closeWidgetModal = () => setWidgetModal(null);
-
   const updateDraft = (patch) => setDraft((prev) => ({ ...prev, ...patch }));
 
   const handleWidgetSave = () => {
@@ -362,13 +347,10 @@ export default function MainPage({ user, onLogout }) {
             {/* Online Users Indicator */}
             <div className="online-badge" title="Users online now">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="#22c55e" aria-hidden="true">
-                {/* back-left person */}
                 <circle cx="6" cy="8" r="2.4" opacity="0.65" />
                 <path d="M1 19c0-3 2.2-5 5-5s5 2 5 5z" opacity="0.65" />
-                {/* back-right person */}
                 <circle cx="18" cy="8" r="2.4" opacity="0.65" />
                 <path d="M13 19c0-3 2.2-5 5-5s5 2 5 5z" opacity="0.65" />
-                {/* front person */}
                 <circle cx="12" cy="8.5" r="3" stroke="#150f1c" strokeWidth="1.2" />
                 <path d="M6 21c0-3.6 2.7-6 6-6s6 2.4 6 6z" stroke="#150f1c" strokeWidth="1.2" />
               </svg>
@@ -381,7 +363,6 @@ export default function MainPage({ user, onLogout }) {
         </div>
 
         <div className="header-right">
-          {/* Couple Widgets: Days Together / Our Time / Next Meet-up */}
           <div className="header-widgets">
             {/* Days Together */}
             <button className="widget-chip" title="Edit anniversary" onClick={() => openWidgetModal('anniversary')}>
@@ -425,7 +406,15 @@ export default function MainPage({ user, onLogout }) {
           </div>
 
           <div className="burger-menu-container">
-            <button className={`burger-btn ${menuOpen ? 'open' : ''}`} onClick={handleToggleMenu}>
+            {/* Glowing Login Notification Tooltip */}
+            {showLoginTip && (
+              <div className="login-tip-badge">
+                <span>Log in your account</span>
+                <div className="tip-arrow"></div>
+              </div>
+            )}
+
+            <button className={`burger-btn ${menuOpen ? 'open' : ''} ${showLoginTip ? 'glowing-burger' : ''}`} onClick={handleToggleMenu}>
               {menuOpen && !isClosing ? (
                 <svg className="animated-svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                   <line x1="18" y1="6" x2="6" y2="18"></line>
@@ -460,9 +449,8 @@ export default function MainPage({ user, onLogout }) {
         </div>
       </header>
 
-      {/* Main Content / Features Grid (Live Call at Photobooth ay magkatabi na) */}
+      {/* Main Content / Features Grid */}
       <main className="main-content-area">
-
         <div className="feature-quote-wrapper">
           <p className={`feature-quote-text ${fade ? 'visible' : 'hidden'}`}>
             {quotes[currentQuoteIndex]}
@@ -484,7 +472,7 @@ export default function MainPage({ user, onLogout }) {
             </div>
           </button>
 
-          {/* 2. Photobooth - ACTIVE (Inilipat para maging katabi ng Live Call) */}
+          {/* 2. Photobooth - ACTIVE */}
           <div className="menu-card-wrapper">
             <span className="pulsing-badge">Most Visited</span>
             <button className="menu-card photobooth-highlight" onClick={() => handleFeatureNavigate('/photobooth')}>
@@ -572,7 +560,7 @@ export default function MainPage({ user, onLogout }) {
         </div>
       </main>
 
-      {/* Couple Widget Popup (Anniversary / Time Zones / Next Meet-up) */}
+      {/* Couple Widget Popup */}
       {widgetModal && (
         <div className="modal-overlay" onClick={closeWidgetModal}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
@@ -736,40 +724,29 @@ export default function MainPage({ user, onLogout }) {
             <h2>SETTINGS</h2>
 
             <div className="settings-options-list">
-              {/* Light Mode */}
               <div className="setting-item">
                 <div className="setting-label">
                   <span>Light Mode</span>
-                  <p>Switch interface to white theme</p>
+                  <p>Switch between dark and light appearance</p>
                 </div>
-                <button className={`setting-toggle-btn ${isLightMode ? 'active' : ''}`} onClick={handleThemeToggle}>
-                  {isLightMode ? 'On' : 'Off'}
-                </button>
-              </div>
-
-              {/* Version */}
-              <div className="setting-item">
-                <div className="setting-label">
-                  <span>Version</span>
-                  <p>Current website version</p>
-                </div>
-                <span className="setting-toggle-btn active version-badge">
-                  v{APP_VERSION}
-                </span>
-              </div>
-
-              {/* Future Updates */}
-              <div className="setting-item future-updates">
-                <div className="setting-label">
-                  <span>Future Updates</span>
-                  <p>What's coming to SnapSync</p>
-                </div>
-                <ul className="future-updates-list">
-                  <li><b>Messages</b> – chat with your partner using the same Code ID.</li>
-                  <li><b>Mini Games</b> – play together, connected through Code ID.</li>
-                  <li><b>Premium Plan</b> – unlock beautiful photobooth strip designs, faster connection, unlimited ID generation, and customizable music and background.</li>
-                  <li><b>Music Room</b> – sing together with your partner.</li>
-                </ul>
+                <label className="toggle-switch">
+                  <input
+                    type="checkbox"
+                    checked={isLightMode}
+                    onChange={() => {
+                      const newLight = !isLightMode;
+                      setIsLightMode(newLight);
+                      if (newLight) {
+                        document.body.classList.add('light-mode');
+                        localStorage.setItem('snapsync_theme', 'light');
+                      } else {
+                        document.body.classList.remove('light-mode');
+                        localStorage.setItem('snapsync_theme', 'dark');
+                      }
+                    }}
+                  />
+                  <span className="slider"></span>
+                </label>
               </div>
             </div>
 
@@ -777,6 +754,7 @@ export default function MainPage({ user, onLogout }) {
           </div>
         </div>
       )}
+
     </div>
   );
 }
