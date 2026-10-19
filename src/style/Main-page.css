@@ -713,6 +713,23 @@
   transform: translateY(-2px);
 }
 
+/* Save / Clear buttons habang nagse-save */
+.modal-close-btn:disabled,
+.modal-secondary-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Error message kapag nag-fail ang pag-save sa account */
+.modal-error {
+  color: #ff6b6b;
+  font-size: 0.85rem;
+  margin: 0 0 12px;
+  text-align: center;
+  width: 100%;
+}
+
 /* About Modal */
 .modal-content.about-modal-content {
   max-height: 85vh;
@@ -992,39 +1009,12 @@ body.light-mode .modal-secondary-btn {
 body.light-mode .modal-secondary-btn:hover {
   background: rgba(0, 0, 0, 0.1);
 }
+
 /* --- Burger Menu Login Notification Tip --- */
 .burger-menu-container {
   position: relative;
   display: flex;
   align-items: center;
-}
-
-.login-tip-badge {
-  position: absolute;
-  right: 60px;
-  background: linear-gradient(135deg, #ff4d4d, #f43f5e);
-  color: #ffffff;
-  padding: 6px 12px;
-  border-radius: 8px;
-  font-size: 0.8rem;
-  font-weight: 600;
-  white-space: nowrap;
-  box-shadow: 0 4px 15px rgba(255, 77, 77, 0.4);
-  animation: tipFadeBounce 1.5s infinite alternate ease-in-out;
-  pointer-events: none;
-  z-index: 10;
-}
-
-.tip-arrow {
-  position: absolute;
-  top: 50%;
-  right: -5px;
-  transform: translateY(-50%);
-  width: 0;
-  height: 0;
-  border-top: 6px solid transparent;
-  border-bottom: 6px solid transparent;
-  border-left: 6px solid #f43f5e;
 }
 
 .glowing-burger {
@@ -1041,11 +1031,104 @@ body.light-mode .modal-secondary-btn:hover {
   }
 }
 
-@keyframes tipFadeBounce {
-  0% {
-    transform: translateX(0);
+/* Login notification tip: nasa ilalim ng burger button, hindi tinatakpan ang mga chip */
+.login-tip-badge {
+  position: absolute;
+  top: calc(100% + 14px);
+  right: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: linear-gradient(135deg, #ff4d4d, #ec4899);
+  color: #ffffff;
+  border-radius: 14px;
+  white-space: nowrap;
+  box-shadow: 0 12px 28px -8px rgba(244, 63, 94, 0.55);
+  pointer-events: none;
+  z-index: 50;
+  animation:
+    tipSlideDown 0.4s cubic-bezier(0.16, 1, 0.3, 1),
+    tipFloat 2s ease-in-out 0.4s infinite alternate;
+}
+
+.tip-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+  flex-shrink: 0;
+}
+
+.tip-icon svg {
+  width: 18px;
+  height: 18px;
+}
+
+.tip-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  text-align: left;
+}
+
+.tip-text strong {
+  font-size: 0.85rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.tip-text small {
+  font-size: 0.7rem;
+  font-weight: 500;
+  line-height: 1.2;
+  opacity: 0.9;
+}
+
+.tip-arrow {
+  position: absolute;
+  top: -5px;
+  right: 15px;
+  width: 12px;
+  height: 12px;
+  background: #f14986;
+  border-radius: 2px;
+  transform: rotate(45deg);
+}
+
+@keyframes tipSlideDown {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes tipFloat {
+  from { transform: translateY(0); }
+  to { transform: translateY(4px); }
+}
+
+@keyframes tipSlideUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Medium at small screens: toast sa ilalim ng screen */
+@media (max-width: 1180px) {
+  .login-tip-badge {
+    position: fixed;
+    top: auto;
+    bottom: 20px;
+    left: 16px;
+    right: 16px;
+    margin: 0 auto;
+    width: fit-content;
+    max-width: calc(100vw - 32px);
+    animation: tipSlideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
   }
-  100% {
-    transform: translateX(-5px);
+
+  .tip-arrow {
+    display: none;
   }
 }
