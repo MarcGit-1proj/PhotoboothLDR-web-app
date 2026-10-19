@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { supabase } from '../supabaseClient';
 import '../style/Main-page.css';
 
 const APP_VERSION = '1.5.0';
 const COUPLE_STORAGE_KEY = 'snapsync_couple';
+const COUPLE_DEFAULTS = { anniversary: '', myTz: '', partnerTz: '', partnerCity: '', meetDate: '' };
 
 const FALLBACK_TIMEZONES = [
   'Asia/Manila', 'Asia/Tokyo', 'Asia/Seoul', 'Asia/Singapore', 'Asia/Dubai',
@@ -61,15 +63,21 @@ const toInputDate = (d) => {
 
 const dayDiff = (a, b) => Math.round((a - b) / 86400000);
 
+// Guest: galing sa localStorage (sa browser lang)
 const loadCouple = () => {
-  const base = { anniversary: '', myTz: '', partnerTz: '', partnerCity: '', meetDate: '' };
   try {
     const raw = localStorage.getItem(COUPLE_STORAGE_KEY);
-    return raw ? { ...base, ...JSON.parse(raw) } : base;
+    return raw ? { ...COUPLE_DEFAULTS, ...JSON.parse(raw) } : { ...COUPLE_DEFAULTS };
   } catch {
-    return base;
+    return { ...COUPLE_DEFAULTS };
   }
 };
+
+// Naka-login: galing sa Supabase account (user_metadata.couple)
+const coupleFromUser = (user) => ({
+  ...COUPLE_DEFAULTS,
+  ...(user?.user_metadata?.couple || {})
+});
 
 /* ---------- Small icon components ---------- */
 const CalendarHeartIcon = ({ size = 24, color = 'currentColor' }) => (
@@ -111,10 +119,13 @@ export default function MainPage({ user, onLogout }) {
   const [isLightMode, setIsLightMode] = useState(false);
   const [onlineCount, setOnlineCount] = useState(() => randInt(8, 70));
 
-  const [couple, setCouple] = useState(loadCouple);
+  // Naka-login = account data; guest = localStorage
+  const [couple, setCouple] = useState(() => (user ? coupleFromUser(user) : loadCouple()));
   const [now, setNow] = useState(() => new Date());
   const [widgetModal, setWidgetModal] = useState(null);
   const [draft, setDraft] = useState({});
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState('');
 
   useEffect(() => {
     if (!user) {
@@ -147,14 +158,6 @@ export default function MainPage({ user, onLogout }) {
     const tick = setInterval(() => setNow(new Date()), 15000);
     return () => clearInterval(tick);
   }, []);
-
-  useEffect(() => {
-    try {
-      localStorage.setItem(COUPLE_STORAGE_KEY, JSON.stringify(couple));
-    } catch {
-      /* storage unavailable, ignore */
-    }
-  }, [couple]);
 
   const quotes = [
     "Want to play and have fun? Go to Mini Games",
@@ -292,6 +295,7 @@ export default function MainPage({ user, onLogout }) {
   };
 
   const openWidgetModal = (type) => {
+    setSaveError('');
     setDraft({
       anniversary: couple.anniversary,
       meetDate: couple.meetDate,
@@ -302,34 +306,71 @@ export default function MainPage({ user, onLogout }) {
     setWidgetModal(type);
   };
 
-  const closeWidgetModal = () => setWidgetModal(null);
+  const closeWidgetModal = () => {
+    setSaveError('');
+    setWidgetModal(null);
+  };
   const updateDraft = (patch) => setDraft((prev) => ({ ...prev, ...patch }));
 
-  const handleWidgetSave = () => {
+  // Naka-login: sine-save sa Supabase account. Guest: sa localStorage.
+  // Nag-a-update lang ang screen kapag matagumpay ang pag-save.
+  const persistCouple = async (next) => {
+    setSaveError('');
+    if (user) {
+      setSaving(true);
+      try {
+        const { error } = await supabase.auth.updateUser({ data: { couple: next } });
+        if (error) throw error;
+      } catch (err) {
+        setSaving(false);
+        setSaveError(
+          (err && err.message) || 'Could not save to your account. Please try again.'
+        );
+        return false;
+      }
+      setSaving(false);
+    } else {
+      try {
+        localStorage.setItem(COUPLE_STORAGE_KEY, JSON.stringify(next));
+      } catch {
+        /* storage unavailable, ignore */
+      }
+    }
+    setCouple(next);
+    return true;
+  };
+
+  const handleWidgetSave = async () => {
+    if (saving) return;
+    let next = couple;
     if (widgetModal === 'anniversary') {
-      setCouple((prev) => ({ ...prev, anniversary: draft.anniversary || '' }));
+      next = { ...couple, anniversary: draft.anniversary || '' };
     } else if (widgetModal === 'meetup') {
-      setCouple((prev) => ({ ...prev, meetDate: draft.meetDate || '' }));
+      next = { ...couple, meetDate: draft.meetDate || '' };
     } else if (widgetModal === 'timezone') {
-      setCouple((prev) => ({
-        ...prev,
+      next = {
+        ...couple,
         myTz: draft.myTz || detectTimezone(),
         partnerTz: draft.partnerTz || '',
         partnerCity: (draft.partnerCity || '').trim()
-      }));
+      };
     }
-    closeWidgetModal();
+    const ok = await persistCouple(next);
+    if (ok) closeWidgetModal();
   };
 
-  const handleWidgetClear = () => {
+  const handleWidgetClear = async () => {
+    if (saving) return;
+    let next = couple;
     if (widgetModal === 'anniversary') {
-      setCouple((prev) => ({ ...prev, anniversary: '' }));
+      next = { ...couple, anniversary: '' };
     } else if (widgetModal === 'meetup') {
-      setCouple((prev) => ({ ...prev, meetDate: '' }));
+      next = { ...couple, meetDate: '' };
     } else if (widgetModal === 'timezone') {
-      setCouple((prev) => ({ ...prev, partnerTz: '', partnerCity: '' }));
+      next = { ...couple, partnerTz: '', partnerCity: '' };
     }
-    closeWidgetModal();
+    const ok = await persistCouple(next);
+    if (ok) closeWidgetModal();
   };
 
   return (
@@ -638,11 +679,17 @@ export default function MainPage({ user, onLogout }) {
               </>
             )}
 
+            {saveError && (
+              <p className="modal-error" role="alert">{saveError}</p>
+            )}
+
             <div className="modal-actions">
-              <button className="modal-secondary-btn" onClick={handleWidgetClear}>
+              <button className="modal-secondary-btn" onClick={handleWidgetClear} disabled={saving}>
                 {widgetModal === 'timezone' ? 'Clear partner' : 'Clear'}
               </button>
-              <button className="modal-close-btn" onClick={handleWidgetSave}>Save</button>
+              <button className="modal-close-btn" onClick={handleWidgetSave} disabled={saving}>
+                {saving ? 'Saving...' : 'Save'}
+              </button>
             </div>
           </div>
         </div>
