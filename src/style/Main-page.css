@@ -1582,34 +1582,40 @@ body.light-mode .modal-secondary-btn:hover {
   cursor: not-allowed;
 }
 
-.profile-icon-btn {
+/* Upload button: nasa ibabang gilid ng avatar */
+.profile-avatar-upload {
+  position: absolute;
+  left: 50%;
+  bottom: 2px;
+  transform: translateX(-50%);
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 40px;
-  height: 40px;
+  width: 38px;
+  height: 38px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  color: #f4f4f5;
+  background: linear-gradient(135deg, #ec4899, #f43f5e);
+  border: 3px solid #151519;
+  box-shadow: 0 6px 16px -4px rgba(236, 72, 153, 0.6);
+  color: #ffffff;
   cursor: pointer;
-  transition: background 0.2s ease, color 0.2s ease, transform 0.15s ease;
+  z-index: 2;
+  transition: transform 0.15s ease, box-shadow 0.2s ease;
 }
 
-.profile-icon-btn:hover:not(:disabled) {
-  background: rgba(236, 72, 153, 0.18);
-  color: #f472b6;
-  transform: translateY(-1px);
+.profile-avatar-upload:hover:not(:disabled) {
+  transform: translateX(-50%) translateY(-2px);
+  box-shadow: 0 10px 20px -4px rgba(236, 72, 153, 0.75);
 }
 
-.profile-icon-btn:disabled {
+.profile-avatar-upload:disabled {
   opacity: 0.6;
   cursor: not-allowed;
 }
 
-.profile-icon-btn .icon-svg {
-  width: 20px;
-  height: 20px;
+.profile-avatar-upload .icon-svg {
+  width: 18px;
+  height: 18px;
 }
 
 /* Nakatago ang aktuwal na file input */
@@ -1946,10 +1952,8 @@ body.light-mode .profile-row-label {
   color: #7c3aed;
 }
 
-body.light-mode .profile-icon-btn {
-  background: rgba(0, 0, 0, 0.04);
-  border-color: rgba(0, 0, 0, 0.12);
-  color: #18181b;
+body.light-mode .profile-avatar-upload {
+  border-color: #ffffff;
 }
 
 body.light-mode .profile-input {

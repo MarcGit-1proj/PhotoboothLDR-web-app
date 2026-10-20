@@ -417,6 +417,27 @@ export default function UsersProfilePage() {
                       <span aria-hidden="true">{initial}</span>
                     )}
                   </div>
+
+                  {isAccount && (
+                    <>
+                      <button
+                        className="profile-avatar-upload"
+                        onClick={openFilePicker}
+                        disabled={busy}
+                        aria-label="Upload profile photo"
+                        title="Upload profile photo"
+                      >
+                        <UploadIcon />
+                      </button>
+                      <input
+                        ref={fileInputRef}
+                        className="profile-file-input"
+                        type="file"
+                        accept="image/png,image/jpeg,image/webp"
+                        onChange={handlePhotoSelected}
+                      />
+                    </>
+                  )}
                 </div>
 
                 {/* Pangalan, ID, badge */}
@@ -546,22 +567,6 @@ export default function UsersProfilePage() {
                         Remove photo
                       </button>
                     )}
-                    <button
-                      className="profile-icon-btn"
-                      onClick={openFilePicker}
-                      disabled={busy}
-                      aria-label="Upload profile photo"
-                      title="Upload profile photo"
-                    >
-                      <UploadIcon />
-                    </button>
-                    <input
-                      ref={fileInputRef}
-                      className="profile-file-input"
-                      type="file"
-                      accept="image/png,image/jpeg,image/webp"
-                      onChange={handlePhotoSelected}
-                    />
                   </div>
                 </div>
               )}
