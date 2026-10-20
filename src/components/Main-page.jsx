@@ -259,6 +259,23 @@ export default function MainPage({ user, onLogout }) {
     }, 400);
   };
 
+  // User Profile: naka-login = diretso sa profile.
+  // Guest = dadalhin muna sa login page (nililinis ang guest session).
+  const handleProfileClick = () => {
+    if (user) {
+      handleFeatureNavigate('/profile');
+      return;
+    }
+    setIsTransitioning(true);
+    setTimeout(() => {
+      if (onLogout) {
+        onLogout();
+      } else {
+        navigate('/');
+      }
+    }, 400);
+  };
+
   const myTz = couple.myTz || detectTimezone();
   const today = startOfDay(now);
 
@@ -592,7 +609,7 @@ export default function MainPage({ user, onLogout }) {
           </div>
 
           {/* 6. User Profile - ACTIVE */}
-          <button className="menu-card" onClick={() => handleFeatureNavigate('/profile')}>
+          <button className="menu-card" onClick={handleProfileClick}>
             <div className="card-icon-wrapper">
               <svg className="animated-svg-icon" viewBox="0 0 24 24">
                 <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>

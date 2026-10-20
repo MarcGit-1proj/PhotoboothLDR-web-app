@@ -12,6 +12,8 @@ export default function LoginPage({ onLogin, onContinueAsGuest }) {
   const [formError, setFormError] = useState("");
   const [formInfo, setFormInfo] = useState("");
   const [loading, setLoading] = useState(false);
+  // True lang habang gumagawa ng account at ng unique ID
+  const [generating, setGenerating] = useState(false);
 
   const isSignup = mode === "signup";
 
@@ -39,6 +41,7 @@ export default function LoginPage({ onLogin, onContinueAsGuest }) {
     setFormInfo("");
     if (!validate()) return;
     setLoading(true);
+    if (isSignup) setGenerating(true);
     try {
       if (isSignup) {
         const { data, error } = await supabase.auth.signUp({
@@ -67,6 +70,7 @@ export default function LoginPage({ onLogin, onContinueAsGuest }) {
       setFormError(err.message || "Something went wrong. Try again.");
     } finally {
       setLoading(false);
+      setGenerating(false);
     }
   };
 
@@ -106,6 +110,16 @@ export default function LoginPage({ onLogin, onContinueAsGuest }) {
 
   return (
     <div className="ss-login-page">
+      {generating && (
+        <div className="ss-generating-overlay" role="status" aria-live="polite">
+          <div className="ss-generating-box">
+            <span className="ss-spinner" aria-hidden="true"></span>
+            <p className="ss-generating-title">Creating your account...</p>
+            <p className="ss-generating-text">Generating your unique ID</p>
+          </div>
+        </div>
+      )}
+
       <div className="ss-login-card">
         <span className="ss-login-badge">Long-Distance Connection</span>
 

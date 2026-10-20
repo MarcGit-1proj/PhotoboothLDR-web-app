@@ -284,3 +284,66 @@
   border: 1px solid rgba(34, 197, 94, 0.3);
   border-radius: 12px;
 }
+/* ===== Loading screen habang gumagawa ng account at unique ID ===== */
+.ss-generating-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  box-sizing: border-box;
+  background: rgba(15, 15, 17, 0.82);
+  backdrop-filter: blur(6px);
+  animation: ssGenFade 0.2s ease;
+}
+
+.ss-generating-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 32px 40px;
+  max-width: 100%;
+  box-sizing: border-box;
+  text-align: center;
+  background: #18181b;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+}
+
+.ss-spinner {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 4px solid rgba(236, 72, 153, 0.2);
+  border-top-color: #ec4899;
+  animation: ssSpin 0.8s linear infinite;
+}
+
+.ss-generating-title {
+  margin: 8px 0 0 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #f4f4f5;
+}
+
+.ss-generating-text {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #a1a1aa;
+}
+
+@keyframes ssSpin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes ssGenFade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
