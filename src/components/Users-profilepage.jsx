@@ -1,9 +1,15 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 import '../style/Main-page.css';
 
 const COUPLE_STORAGE_KEY = 'snapsync_couple';
+const AVATAR_BUCKET = 'avatars';
+const AVATAR_SIZE = 256;
+const MAX_UPLOAD_BYTES = 8 * 1024 * 1024;
+const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+const BIO_MAX = 160;
+const NICK_MAX = 20;
 
 /* ---------- Helpers ---------- */
 const parseDateInput = (str) => {
@@ -32,11 +38,72 @@ const readLocalCouple = () => {
 
 const prettyTz = (tz) => (tz ? tz.replace(/_/g, ' ') : '');
 
-/* ---------- Small components ---------- */
+// Crop sa gitna (square) at paliitin para magaan ang upload
+const resizeToSquare = (file, size) =>
+  new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      try {
+        const side = Math.min(img.naturalWidth, img.naturalHeight);
+        const sx = (img.naturalWidth - side) / 2;
+        const sy = (img.naturalHeight - side) / 2;
+        const canvas = document.createElement('canvas');
+        canvas.width = size;
+        canvas.height = size;
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, size, size);
+        ctx.drawImage(img, sx, sy, side, side, 0, 0, size, size);
+        canvas.toBlob(
+          (blob) => {
+            URL.revokeObjectURL(url);
+            if (blob) resolve(blob);
+            else reject(new Error('Could not process that image.'));
+          },
+          'image/jpeg',
+          0.85
+        );
+      } catch (err) {
+        URL.revokeObjectURL(url);
+        reject(err);
+      }
+    };
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      reject(new Error('That file is not a supported image.'));
+    };
+    img.src = url;
+  });
+
+/* ---------- Icons ---------- */
 const BackIcon = () => (
   <svg className="icon-svg icon-bold" viewBox="0 0 24 24" aria-hidden="true">
     <line x1="19" y1="12" x2="5" y2="12"></line>
     <polyline points="12 19 5 12 12 5"></polyline>
+  </svg>
+);
+
+const UserIcon = () => (
+  <svg className="icon-svg" viewBox="0 0 24 24" aria-hidden="true">
+    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+    <circle cx="12" cy="7" r="4"></circle>
+  </svg>
+);
+
+const FeatherIcon = () => (
+  <svg className="icon-svg" viewBox="0 0 24 24" aria-hidden="true">
+    <path d="M20.24 12.24a6 6 0 0 0-8.49-8.49L5 10.5V19h8.5z"></path>
+    <line x1="16" y1="8" x2="2" y2="22"></line>
+    <line x1="17.5" y1="15" x2="9" y2="15"></line>
+  </svg>
+);
+
+const UploadIcon = () => (
+  <svg className="icon-svg" viewBox="0 0 24 24" aria-hidden="true">
+    <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path>
+    <polyline points="16 6 12 2 8 6"></polyline>
+    <line x1="12" y1="2" x2="12" y2="15"></line>
   </svg>
 );
 
@@ -53,6 +120,12 @@ const CheckIcon = () => (
   </svg>
 );
 
+const SparkleIcon = () => (
+  <svg className="sparkle-svg" viewBox="0 0 24 24" aria-hidden="true">
+    <path d="M12 1.5l2.6 8 8 2.5-8 2.5-2.6 8-2.6-8-8-2.5 8-2.5z"></path>
+  </svg>
+);
+
 const InfoRow = ({ label, children }) => (
   <div className="profile-row">
     <span className="profile-row-label">{label}</span>
@@ -62,15 +135,19 @@ const InfoRow = ({ label, children }) => (
 
 export default function UsersProfilePage() {
   const navigate = useNavigate();
+  const fileInputRef = useRef(null);
 
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState(null);
 
   const [editing, setEditing] = useState(false);
   const [nickInput, setNickInput] = useState('');
+  const [bioInput, setBioInput] = useState('');
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
+  const [brokenAvatar, setBrokenAvatar] = useState('');
 
   // Unique ID (friend code)
   const [friendCode, setFriendCode] = useState('');
@@ -110,7 +187,15 @@ export default function UsersProfilePage() {
   const isAccount = !!user && !user.is_anonymous;
   const meta = user?.user_metadata || {};
   const nickname = meta.nickname || meta.display_name || '';
+  const bio = meta.bio || '';
+  const avatarUrl = meta.avatar_url || '';
+  const showAvatarImage = !!avatarUrl && avatarUrl !== brokenAvatar;
   const email = user?.email || '';
+
+  const displayName = isAccount
+    ? nickname || (email ? email.split('@')[0] : 'You')
+    : 'Guest';
+  const initial = displayName.charAt(0).toUpperCase();
 
   // Kunin ang unique ID ng account (gagawa ang server kung wala pa)
   const loadFriendCode = useCallback(async () => {
@@ -129,6 +214,11 @@ export default function UsersProfilePage() {
   useEffect(() => {
     if (isAccount) loadFriendCode();
   }, [isAccount, loadFriendCode]);
+
+  const showNotice = (text) => {
+    setNotice(text);
+    setTimeout(() => setNotice(''), 2500);
+  };
 
   const handleCopy = async () => {
     if (!friendCode) return;
@@ -156,22 +246,10 @@ export default function UsersProfilePage() {
     }
   };
 
-  const displayName = isAccount
-    ? nickname || (email ? email.split('@')[0] : 'You')
-    : 'Guest';
-  const initial = displayName.charAt(0).toUpperCase();
-
-  const couple = isAccount ? meta.couple || {} : readLocalCouple();
-
-  const today = new Date();
-  const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-  const anniversaryDate = parseDateInput(couple.anniversary);
-  const daysTogether = anniversaryDate
-    ? Math.max(0, daysBetween(todayStart, anniversaryDate))
-    : null;
-
+  /* ----- Edit nickname + bio ----- */
   const startEdit = () => {
     setNickInput(nickname);
+    setBioInput(bio);
     setError('');
     setNotice('');
     setEditing(true);
@@ -182,9 +260,9 @@ export default function UsersProfilePage() {
     setError('');
   };
 
-  const saveNickname = async () => {
-    const value = nickInput.trim();
-    if (!value) {
+  const saveProfile = async () => {
+    const nick = nickInput.trim();
+    if (!nick) {
       setError('Enter a nickname.');
       return;
     }
@@ -192,17 +270,96 @@ export default function UsersProfilePage() {
     setError('');
     try {
       const { data, error: updateError } = await supabase.auth.updateUser({
-        data: { nickname: value }
+        data: { nickname: nick, bio: bioInput.trim() }
       });
       if (updateError) throw updateError;
       setUser(data.user);
       setEditing(false);
-      setNotice('Nickname updated.');
-      setTimeout(() => setNotice(''), 2500);
+      showNotice('Profile updated.');
     } catch (err) {
-      setError((err && err.message) || 'Could not save your nickname. Please try again.');
+      setError((err && err.message) || 'Could not save your profile. Please try again.');
     } finally {
       setSaving(false);
+    }
+  };
+
+  /* ----- Profile photo ----- */
+  const openFilePicker = () => {
+    if (fileInputRef.current) fileInputRef.current.click();
+  };
+
+  const handlePhotoSelected = async (e) => {
+    const file = e.target.files && e.target.files[0];
+    e.target.value = '';
+    if (!file || !user) return;
+
+    setError('');
+    setNotice('');
+
+    if (!ALLOWED_TYPES.includes(file.type)) {
+      setError('Please choose a JPG, PNG or WEBP image.');
+      return;
+    }
+    if (file.size > MAX_UPLOAD_BYTES) {
+      setError('That image is too large. Please choose one under 8 MB.');
+      return;
+    }
+
+    setUploading(true);
+    let uploadedPath = '';
+    try {
+      const blob = await resizeToSquare(file, AVATAR_SIZE);
+      const path = `${user.id}/avatar-${Date.now()}.jpg`;
+
+      const { error: uploadError } = await supabase.storage
+        .from(AVATAR_BUCKET)
+        .upload(path, blob, { contentType: 'image/jpeg', cacheControl: '31536000', upsert: false });
+      if (uploadError) throw uploadError;
+      uploadedPath = path;
+
+      const { data: pub } = supabase.storage.from(AVATAR_BUCKET).getPublicUrl(path);
+
+      const { data, error: updateError } = await supabase.auth.updateUser({
+        data: { avatar_url: pub.publicUrl, avatar_path: path }
+      });
+      if (updateError) throw updateError;
+
+      const oldPath = meta.avatar_path;
+      setUser(data.user);
+      if (oldPath && oldPath !== path) {
+        // Burahin ang lumang litrato (hindi mahalaga kung mag-fail)
+        supabase.storage.from(AVATAR_BUCKET).remove([oldPath]).catch(() => {});
+      }
+      showNotice('Profile photo updated.');
+    } catch (err) {
+      if (uploadedPath) {
+        supabase.storage.from(AVATAR_BUCKET).remove([uploadedPath]).catch(() => {});
+      }
+      setError((err && err.message) || 'Could not upload your photo. Please try again.');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleRemovePhoto = async () => {
+    setError('');
+    setNotice('');
+    setUploading(true);
+    try {
+      const oldPath = meta.avatar_path;
+      const { data, error: updateError } = await supabase.auth.updateUser({
+        data: { avatar_url: null, avatar_path: null }
+      });
+      if (updateError) throw updateError;
+      setUser(data.user);
+      if (oldPath) {
+        supabase.storage.from(AVATAR_BUCKET).remove([oldPath]).catch(() => {});
+      }
+      showNotice('Profile photo removed.');
+    } catch (err) {
+      setError((err && err.message) || 'Could not remove your photo. Please try again.');
+    } finally {
+      setUploading(false);
     }
   };
 
@@ -217,6 +374,17 @@ export default function UsersProfilePage() {
     sessionStorage.removeItem('snapsync_nick_skip');
     window.location.assign('/');
   };
+
+  const couple = isAccount ? meta.couple || {} : readLocalCouple();
+
+  const today = new Date();
+  const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  const anniversaryDate = parseDateInput(couple.anniversary);
+  const daysTogether = anniversaryDate
+    ? Math.max(0, daysBetween(todayStart, anniversaryDate))
+    : null;
+
+  const busy = saving || uploading;
 
   return (
     <div className="main-page-wrapper profile-page">
@@ -234,79 +402,174 @@ export default function UsersProfilePage() {
           <>
             {/* Hero */}
             <section className="profile-card profile-hero">
-              <div className="profile-avatar" aria-hidden="true">{initial}</div>
-              <div className="profile-name-row">
-                <h2 className="profile-name">{displayName}</h2>
-                {isAccount && (
-                  <div className="profile-id-wrap">
-                    {codeStatus === 'ready' ? (
-                      <>
-                        <span className="profile-id-code">{friendCode}</span>
-                        <button
-                          className={`profile-copy-btn ${copied ? 'copied' : ''}`}
-                          onClick={handleCopy}
-                          aria-label="Copy your user ID"
-                        >
-                          {copied ? <CheckIcon /> : <CopyIcon />}
-                          <span aria-live="polite">{copied ? 'Copied' : 'Copy'}</span>
-                        </button>
-                      </>
-                    ) : codeStatus === 'error' ? (
-                      <>
-                        <span className="profile-id-status">Could not load your ID</span>
-                        <button className="profile-link-btn" onClick={loadFriendCode}>Retry</button>
-                      </>
+              <div className="profile-hero-inner">
+                {/* Avatar */}
+                <div className="profile-avatar-ring">
+                  <div className="profile-avatar">
+                    {showAvatarImage ? (
+                      <img
+                        className="profile-avatar-img"
+                        src={avatarUrl}
+                        alt={`${displayName}'s profile`}
+                        onError={() => setBrokenAvatar(avatarUrl)}
+                      />
                     ) : (
-                      <span className="profile-id-status">Generating your ID...</span>
+                      <span aria-hidden="true">{initial}</span>
                     )}
                   </div>
-                )}
+                </div>
+
+                {/* Pangalan, ID, badge */}
+                <div className="profile-identity">
+                  {editing ? (
+                    <input
+                      className="profile-input profile-name-input"
+                      type="text"
+                      maxLength={NICK_MAX}
+                      value={nickInput}
+                      placeholder="Nickname"
+                      aria-label="Nickname"
+                      onChange={(e) => setNickInput(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') saveProfile();
+                        if (e.key === 'Escape') cancelEdit();
+                      }}
+                      autoFocus
+                    />
+                  ) : (
+                    <h2 className="profile-name">{displayName}</h2>
+                  )}
+
+                  {isAccount && (
+                    <div className="profile-id-row">
+                      {codeStatus === 'ready' ? (
+                        <>
+                          <span className="profile-id-code">{friendCode}</span>
+                          <button
+                            className={`profile-copy-btn ${copied ? 'copied' : ''}`}
+                            onClick={handleCopy}
+                            aria-label="Copy your user ID"
+                          >
+                            {copied ? <CheckIcon /> : <CopyIcon />}
+                            <span aria-live="polite">{copied ? 'Copied' : 'Copy'}</span>
+                          </button>
+                        </>
+                      ) : codeStatus === 'error' ? (
+                        <>
+                          <span className="profile-id-status">Could not load your ID</span>
+                          <button className="profile-link-btn" onClick={loadFriendCode}>Retry</button>
+                        </>
+                      ) : (
+                        <span className="profile-id-status">Generating your ID...</span>
+                      )}
+                    </div>
+                  )}
+
+                  <span className={`profile-badge ${isAccount ? 'account' : 'guest'}`}>
+                    <UserIcon />
+                    {isAccount ? 'Account' : 'Guest'}
+                  </span>
+                </div>
+
+                {/* Divider */}
+                <div className="profile-divider" aria-hidden="true">
+                  <span className="profile-divider-line"></span>
+                  <SparkleIcon />
+                  <span className="profile-divider-line"></span>
+                </div>
+
+                {/* Bio */}
+                <div className="profile-bio">
+                  <div className="profile-bio-label">
+                    <FeatherIcon />
+                    <span>Bio</span>
+                  </div>
+                  <div className="profile-bio-box">
+                    {editing ? (
+                      <>
+                        <textarea
+                          className="profile-input profile-textarea"
+                          maxLength={BIO_MAX}
+                          rows={4}
+                          value={bioInput}
+                          placeholder="Tell something about yourself..."
+                          aria-label="Bio"
+                          onChange={(e) => setBioInput(e.target.value)}
+                        />
+                        <span className="profile-count">{bioInput.length}/{BIO_MAX}</span>
+                      </>
+                    ) : (
+                      <>
+                        <p className={`profile-bio-text ${bio ? '' : 'empty'}`}>
+                          {bio ||
+                            (isAccount
+                              ? 'No bio yet. Tap Edit to add one.'
+                              : 'Log in or create an account to add a bio and a profile photo.')}
+                        </p>
+                        <div className="profile-bio-ornament" aria-hidden="true">
+                          <span className="profile-ornament-line"></span>
+                          <SparkleIcon />
+                          <span className="profile-ornament-line"></span>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                </div>
               </div>
-              <span className={`profile-badge ${isAccount ? 'account' : 'guest'}`}>
-                {isAccount ? 'Account' : 'Guest'}
-              </span>
+
+              {error && <p className="profile-error" role="alert">{error}</p>}
+              {notice && <p className="profile-notice" role="status">{notice}</p>}
+
+              {isAccount && (
+                <div className="profile-hero-footer">
+                  <div className="profile-footer-left">
+                    {editing ? (
+                      <>
+                        <button className="profile-btn secondary" onClick={cancelEdit} disabled={saving}>
+                          Cancel
+                        </button>
+                        <button className="profile-btn primary" onClick={saveProfile} disabled={saving}>
+                          {saving ? 'Saving...' : 'Save'}
+                        </button>
+                      </>
+                    ) : (
+                      <button className="profile-edit-btn" onClick={startEdit} disabled={busy}>
+                        Edit
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="profile-footer-right">
+                    {uploading && <span className="profile-id-status">Working...</span>}
+                    {avatarUrl && !uploading && (
+                      <button className="profile-link-btn" onClick={handleRemovePhoto} disabled={busy}>
+                        Remove photo
+                      </button>
+                    )}
+                    <button
+                      className="profile-icon-btn"
+                      onClick={openFilePicker}
+                      disabled={busy}
+                      aria-label="Upload profile photo"
+                      title="Upload profile photo"
+                    >
+                      <UploadIcon />
+                    </button>
+                    <input
+                      ref={fileInputRef}
+                      className="profile-file-input"
+                      type="file"
+                      accept="image/png,image/jpeg,image/webp"
+                      onChange={handlePhotoSelected}
+                    />
+                  </div>
+                </div>
+              )}
             </section>
 
             {isAccount ? (
               <section className="profile-card">
                 <h3 className="profile-card-title">Account</h3>
-
-                <InfoRow label="Nickname">
-                  {editing ? (
-                    <span className="profile-nick-form">
-                      <input
-                        className="profile-input"
-                        type="text"
-                        maxLength={20}
-                        value={nickInput}
-                        placeholder="What should your partner call you?"
-                        onChange={(e) => setNickInput(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') saveNickname();
-                          if (e.key === 'Escape') cancelEdit();
-                        }}
-                        autoFocus
-                      />
-                      <span className="profile-nick-actions">
-                        <button className="profile-btn secondary" onClick={cancelEdit} disabled={saving}>
-                          Cancel
-                        </button>
-                        <button className="profile-btn primary" onClick={saveNickname} disabled={saving}>
-                          {saving ? 'Saving...' : 'Save'}
-                        </button>
-                      </span>
-                    </span>
-                  ) : (
-                    <span className="profile-value-edit">
-                      <span>{nickname || 'Not set'}</span>
-                      <button className="profile-link-btn" onClick={startEdit}>Edit</button>
-                    </span>
-                  )}
-                </InfoRow>
-
-                {error && <p className="profile-error" role="alert">{error}</p>}
-                {notice && <p className="profile-notice" role="status">{notice}</p>}
-
                 <InfoRow label="Email">{email || 'Not available'}</InfoRow>
               </section>
             ) : (

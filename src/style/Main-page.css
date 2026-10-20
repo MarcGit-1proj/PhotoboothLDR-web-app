@@ -1231,7 +1231,7 @@ body.light-mode .modal-secondary-btn:hover {
 
 .profile-main {
   width: 100%;
-  max-width: 640px;
+  max-width: 860px;
   margin: 0 auto;
   padding: 32px 20px 56px;
   display: flex;
@@ -1260,49 +1260,184 @@ body.light-mode .modal-secondary-btn:hover {
   color: #f4f4f5;
 }
 
-/* Hero: avatar + pangalan */
+/* ----- Hero ----- */
 .profile-hero {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 10px;
-  text-align: center;
+  gap: 14px;
+  padding: 20px;
+  background: #121216;
 }
 
-.profile-avatar {
-  width: 84px;
-  height: 84px;
-  border-radius: 50%;
+.profile-hero-inner {
+  display: flex;
+  align-items: center;
+  gap: 32px;
+  padding: 32px 36px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 22px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.02), rgba(236, 72, 153, 0.04));
+}
+
+/* Avatar na may glowing ring */
+.profile-avatar-ring {
+  position: relative;
+  width: 160px;
+  height: 160px;
+  flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 2.2rem;
+}
+
+.profile-avatar-ring::before,
+.profile-avatar-ring::after {
+  content: "";
+  position: absolute;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  pointer-events: none;
+}
+
+.profile-avatar-ring::before {
+  inset: 0;
+  border-left-color: rgba(236, 72, 153, 0.7);
+  border-top-color: rgba(236, 72, 153, 0.25);
+  transform: rotate(-15deg);
+}
+
+.profile-avatar-ring::after {
+  inset: 10px;
+  border-left-color: #ec4899;
+  border-bottom-color: rgba(236, 72, 153, 0.35);
+  transform: rotate(10deg);
+}
+
+.profile-avatar {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 3.2rem;
   font-weight: 800;
   color: #ffffff;
   background: linear-gradient(135deg, #c084fc, #ec4899, #f43f5e);
-  box-shadow: 0 10px 24px -8px rgba(236, 72, 153, 0.5);
+  border: 3px solid rgba(255, 255, 255, 0.55);
+  box-shadow: 0 0 30px rgba(236, 72, 153, 0.55), inset 0 0 18px rgba(255, 255, 255, 0.25);
+}
+
+.profile-avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* Pangalan + ID + badge */
+.profile-identity {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  min-width: 0;
+  flex: 0 1 auto;
 }
 
 .profile-name {
   margin: 0;
-  font-size: 1.4rem;
-  font-weight: 700;
-  color: #f4f4f5;
+  font-size: 2rem;
+  font-weight: 800;
+  line-height: 1.1;
+  color: #ffffff;
   word-break: break-word;
 }
 
-.profile-badge {
-  font-size: 0.7rem;
+.profile-name-input {
+  font-size: 1.3rem;
   font-weight: 700;
-  letter-spacing: 0.5px;
-  text-transform: uppercase;
-  padding: 4px 12px;
+  width: 100%;
+  min-width: 180px;
+}
+
+.profile-id-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px 14px;
+}
+
+.profile-id-code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace;
+  font-size: 1.15rem;
+  font-weight: 600;
+  letter-spacing: 3px;
+  color: #d4d4e8;
+  user-select: all;
+}
+
+.profile-id-status {
+  font-size: 0.9rem;
+  color: #a1a1aa;
+}
+
+.profile-copy-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
   border-radius: 999px;
+  background: rgba(236, 72, 153, 0.1);
+  border: 1px solid rgba(236, 72, 153, 0.6);
+  box-shadow: 0 0 12px rgba(236, 72, 153, 0.25);
+  color: #f472b6;
+  font-family: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease, transform 0.15s ease;
+}
+
+.profile-copy-btn:hover {
+  background: rgba(236, 72, 153, 0.2);
+  transform: translateY(-1px);
+}
+
+.profile-copy-btn .icon-svg {
+  width: 16px;
+  height: 16px;
+}
+
+.profile-copy-btn.copied {
+  background: rgba(34, 197, 94, 0.14);
+  border-color: rgba(34, 197, 94, 0.5);
+  box-shadow: 0 0 12px rgba(34, 197, 94, 0.25);
+  color: #4ade80;
+}
+
+.profile-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 16px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+}
+
+.profile-badge .icon-svg {
+  width: 16px;
+  height: 16px;
 }
 
 .profile-badge.account {
-  background: rgba(34, 197, 94, 0.12);
-  border: 1px solid rgba(34, 197, 94, 0.35);
+  background: rgba(34, 197, 94, 0.1);
+  border: 1px solid rgba(34, 197, 94, 0.55);
+  box-shadow: 0 0 14px rgba(34, 197, 94, 0.2);
   color: #4ade80;
 }
 
@@ -1312,7 +1447,188 @@ body.light-mode .modal-secondary-btn:hover {
   color: #d4d4d8;
 }
 
-/* Mga row ng impormasyon */
+/* Divider sa gitna */
+.profile-divider {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  align-self: stretch;
+  gap: 10px;
+  color: #ec4899;
+}
+
+.profile-divider-line {
+  flex: 1;
+  width: 1px;
+  background: linear-gradient(to bottom, transparent, rgba(255, 255, 255, 0.18), transparent);
+}
+
+.sparkle-svg {
+  width: 16px;
+  height: 16px;
+  fill: currentColor;
+  flex-shrink: 0;
+}
+
+/* Bio */
+.profile-bio {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.profile-bio-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: #f472b6;
+}
+
+.profile-bio-label .icon-svg {
+  width: 18px;
+  height: 18px;
+}
+
+.profile-bio-box {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 18px 20px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.profile-bio-text {
+  margin: 0;
+  font-size: 0.98rem;
+  line-height: 1.55;
+  color: #cbd5e1;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.profile-bio-text.empty {
+  color: #71717a;
+  font-style: italic;
+}
+
+.profile-bio-ornament {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  color: #ec4899;
+}
+
+.profile-ornament-line {
+  width: 28px;
+  height: 1px;
+  background: currentColor;
+  opacity: 0.6;
+}
+
+.profile-textarea {
+  resize: vertical;
+  min-height: 92px;
+  line-height: 1.5;
+}
+
+.profile-count {
+  align-self: flex-end;
+  font-size: 0.75rem;
+  color: #a1a1aa;
+}
+
+/* Footer: Edit sa kaliwa, upload sa kanan */
+.profile-hero-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 6px;
+}
+
+.profile-footer-left,
+.profile-footer-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.profile-edit-btn {
+  background: none;
+  border: none;
+  padding: 6px 0;
+  font-family: inherit;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #ffffff;
+  cursor: pointer;
+}
+
+.profile-edit-btn:hover:not(:disabled) {
+  color: #f472b6;
+}
+
+.profile-edit-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.profile-icon-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #f4f4f5;
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease, transform 0.15s ease;
+}
+
+.profile-icon-btn:hover:not(:disabled) {
+  background: rgba(236, 72, 153, 0.18);
+  color: #f472b6;
+  transform: translateY(-1px);
+}
+
+.profile-icon-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.profile-icon-btn .icon-svg {
+  width: 20px;
+  height: 20px;
+}
+
+/* Nakatago ang aktuwal na file input */
+.profile-file-input {
+  display: none;
+}
+
+/* Nakatago, para sa fallback ng pag-copy */
+.profile-clipboard-helper {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* ----- Mga row ng impormasyon ----- */
 .profile-row {
   display: flex;
   justify-content: space-between;
@@ -1342,12 +1658,6 @@ body.light-mode .modal-secondary-btn:hover {
   word-break: break-word;
 }
 
-.profile-value-edit {
-  display: inline-flex;
-  align-items: center;
-  gap: 12px;
-}
-
 .profile-link-btn {
   background: none;
   border: none;
@@ -1359,8 +1669,13 @@ body.light-mode .modal-secondary-btn:hover {
   cursor: pointer;
 }
 
-.profile-link-btn:hover {
+.profile-link-btn:hover:not(:disabled) {
   text-decoration: underline;
+}
+
+.profile-link-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .profile-hint {
@@ -1374,14 +1689,7 @@ body.light-mode .modal-secondary-btn:hover {
   margin-bottom: 0;
 }
 
-/* Nickname edit form */
-.profile-nick-form {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  width: min(280px, 60vw);
-}
-
+/* Inputs */
 .profile-input {
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.1);
@@ -1400,12 +1708,6 @@ body.light-mode .modal-secondary-btn:hover {
 .profile-input:focus {
   border-color: #ec4899;
   box-shadow: 0 0 0 3px rgba(236, 72, 153, 0.2);
-}
-
-.profile-nick-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
 }
 
 /* Buttons */
@@ -1467,20 +1769,56 @@ body.light-mode .modal-secondary-btn:hover {
 
 /* Messages */
 .profile-error {
-  margin: 4px 0 8px 0;
+  margin: 0;
+  padding: 0 6px;
   font-size: 0.85rem;
   color: #ff6b6b;
-  text-align: right;
 }
 
 .profile-notice {
-  margin: 4px 0 8px 0;
+  margin: 0;
+  padding: 0 6px;
   font-size: 0.85rem;
   color: #4ade80;
-  text-align: right;
 }
 
-/* Phones */
+/* Tablet at phones: magkakapatong ang mga bahagi ng hero */
+@media (max-width: 760px) {
+  .profile-hero-inner {
+    flex-direction: column;
+    align-items: center;
+    gap: 22px;
+    padding: 26px 18px;
+    text-align: center;
+  }
+
+  .profile-identity {
+    align-items: center;
+    width: 100%;
+  }
+
+  .profile-id-row {
+    justify-content: center;
+  }
+
+  .profile-divider {
+    flex-direction: row;
+    align-self: stretch;
+    width: 100%;
+  }
+
+  .profile-divider-line {
+    width: auto;
+    height: 1px;
+    background: linear-gradient(to right, transparent, rgba(255, 255, 255, 0.18), transparent);
+  }
+
+  .profile-bio {
+    width: 100%;
+    text-align: left;
+  }
+}
+
 @media (max-width: 640px) {
   .profile-header {
     padding: 16px;
@@ -1498,21 +1836,20 @@ body.light-mode .modal-secondary-btn:hover {
     padding: 18px;
   }
 
+  .profile-hero {
+    padding: 14px;
+  }
+
+  .profile-name {
+    font-size: 1.7rem;
+  }
+
   .profile-row {
     flex-direction: column;
     gap: 4px;
   }
 
   .profile-row-value {
-    text-align: left;
-  }
-
-  .profile-nick-form {
-    width: 100%;
-  }
-
-  .profile-error,
-  .profile-notice {
     text-align: left;
   }
 }
@@ -1538,10 +1875,67 @@ body.light-mode .profile-card {
   box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
 }
 
+body.light-mode .profile-hero-inner {
+  border-color: rgba(0, 0, 0, 0.1);
+  background: linear-gradient(135deg, rgba(0, 0, 0, 0.015), rgba(236, 72, 153, 0.05));
+}
+
 body.light-mode .profile-card-title,
 body.light-mode .profile-name,
-body.light-mode .profile-row-value {
+body.light-mode .profile-row-value,
+body.light-mode .profile-edit-btn {
   color: #18181b;
+}
+
+body.light-mode .profile-edit-btn:hover:not(:disabled) {
+  color: #db2777;
+}
+
+body.light-mode .profile-id-code {
+  color: #3f3f46;
+}
+
+body.light-mode .profile-id-status,
+body.light-mode .profile-count,
+body.light-mode .profile-hint,
+body.light-mode .profile-loading {
+  color: #52525b;
+}
+
+body.light-mode .profile-copy-btn {
+  color: #db2777;
+}
+
+body.light-mode .profile-copy-btn.copied,
+body.light-mode .profile-badge.account {
+  color: #16a34a;
+}
+
+body.light-mode .profile-badge.guest {
+  background: #e4e4e7;
+  color: #52525b;
+  border-color: rgba(0, 0, 0, 0.08);
+}
+
+body.light-mode .profile-bio-label {
+  color: #db2777;
+}
+
+body.light-mode .profile-bio-box {
+  border-color: rgba(0, 0, 0, 0.1);
+  background: rgba(0, 0, 0, 0.02);
+}
+
+body.light-mode .profile-bio-text {
+  color: #3f3f46;
+}
+
+body.light-mode .profile-bio-text.empty {
+  color: #71717a;
+}
+
+body.light-mode .profile-divider-line {
+  background: linear-gradient(to bottom, transparent, rgba(0, 0, 0, 0.2), transparent);
 }
 
 body.light-mode .profile-row {
@@ -1552,19 +1946,10 @@ body.light-mode .profile-row-label {
   color: #7c3aed;
 }
 
-body.light-mode .profile-hint,
-body.light-mode .profile-loading {
-  color: #52525b;
-}
-
-body.light-mode .profile-badge.account {
-  color: #16a34a;
-}
-
-body.light-mode .profile-badge.guest {
-  background: #e4e4e7;
-  color: #52525b;
-  border-color: rgba(0, 0, 0, 0.08);
+body.light-mode .profile-icon-btn {
+  background: rgba(0, 0, 0, 0.04);
+  border-color: rgba(0, 0, 0, 0.12);
+  color: #18181b;
 }
 
 body.light-mode .profile-input {
@@ -1592,104 +1977,8 @@ body.light-mode .profile-notice {
   color: #16a34a;
 }
 
-/* ===== USER PROFILE: Unique ID + Copy button ===== */
-.profile-id-wrap {
-  display: inline-flex;
-  align-items: center;
-  justify-content: flex-end;
-  flex-wrap: wrap;
-  gap: 10px;
-}
-
-.profile-id-code {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace;
-  font-size: 1.05rem;
-  font-weight: 700;
-  letter-spacing: 2px;
-  color: #f4f4f5;
-  user-select: all;
-}
-
-.profile-id-status {
-  font-size: 0.9rem;
-  color: #a1a1aa;
-}
-
-.profile-copy-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 12px;
-  border-radius: 999px;
-  background: rgba(236, 72, 153, 0.12);
-  border: 1px solid rgba(236, 72, 153, 0.35);
-  color: #fb7185;
-  font-family: inherit;
-  font-size: 0.8rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease, transform 0.15s ease;
-}
-
-.profile-copy-btn:hover {
-  background: rgba(236, 72, 153, 0.22);
-  transform: translateY(-1px);
-}
-
-.profile-copy-btn .icon-svg {
-  width: 16px;
-  height: 16px;
-}
-
-.profile-copy-btn.copied {
-  background: rgba(34, 197, 94, 0.14);
-  border-color: rgba(34, 197, 94, 0.4);
-  color: #4ade80;
-}
-
-/* Nakatago, para sa fallback ng pag-copy */
-.profile-clipboard-helper {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 1px;
-  height: 1px;
-  opacity: 0;
-  pointer-events: none;
-}
-
-@media (max-width: 640px) {
-  .profile-id-wrap {
-    justify-content: flex-start;
+@media (max-width: 760px) {
+  body.light-mode .profile-divider-line {
+    background: linear-gradient(to right, transparent, rgba(0, 0, 0, 0.2), transparent);
   }
-}
-
-body.light-mode .profile-id-code {
-  color: #18181b;
-}
-
-body.light-mode .profile-id-status {
-  color: #52525b;
-}
-
-body.light-mode .profile-copy-btn.copied {
-  color: #16a34a;
-}
-
-/* User ID sa hero: nasa ilalim ng pangalan, nasa gitna */
-.profile-hero .profile-id-wrap {
-  justify-content: center;
-}
-
-/* Pangalan at User ID sa iisang linya (nasa gilid ng pangalan ang code) */
-.profile-name-row {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-wrap: wrap;
-  gap: 8px 14px;
-}
-
-.profile-name-row .profile-id-wrap {
-  flex-wrap: nowrap;
 }
