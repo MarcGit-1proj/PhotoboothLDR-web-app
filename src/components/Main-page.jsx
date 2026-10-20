@@ -80,8 +80,8 @@ const coupleFromUser = (user) => ({
 });
 
 /* ---------- Small icon components ---------- */
-const CalendarHeartIcon = ({ size = 24, color = 'currentColor' }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+const CalendarHeartIcon = () => (
+  <svg className="icon-svg" viewBox="0 0 24 24" aria-hidden="true">
     <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
     <line x1="16" y1="2" x2="16" y2="6"></line>
     <line x1="8" y1="2" x2="8" y2="6"></line>
@@ -90,15 +90,15 @@ const CalendarHeartIcon = ({ size = 24, color = 'currentColor' }) => (
   </svg>
 );
 
-const ClockIcon = ({ size = 24, color = 'currentColor' }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+const ClockIcon = () => (
+  <svg className="icon-svg" viewBox="0 0 24 24" aria-hidden="true">
     <circle cx="12" cy="12" r="10"></circle>
     <polyline points="12 6 12 12 16 14"></polyline>
   </svg>
 );
 
-const HeartIcon = ({ size = 24, color = 'currentColor' }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+const HeartIcon = () => (
+  <svg className="icon-svg" viewBox="0 0 24 24" aria-hidden="true">
     <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
   </svg>
 );
@@ -387,13 +387,13 @@ export default function MainPage({ user, onLogout }) {
 
             {/* Online Users Indicator */}
             <div className="online-badge" title="Users online now">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="#22c55e" aria-hidden="true">
-                <circle cx="6" cy="8" r="2.4" opacity="0.65" />
-                <path d="M1 19c0-3 2.2-5 5-5s5 2 5 5z" opacity="0.65" />
-                <circle cx="18" cy="8" r="2.4" opacity="0.65" />
-                <path d="M13 19c0-3 2.2-5 5-5s5 2 5 5z" opacity="0.65" />
-                <circle cx="12" cy="8.5" r="3" stroke="#150f1c" strokeWidth="1.2" />
-                <path d="M6 21c0-3.6 2.7-6 6-6s6 2.4 6 6z" stroke="#150f1c" strokeWidth="1.2" />
+              <svg className="online-icon" viewBox="0 0 24 24" aria-hidden="true">
+                <circle className="online-icon-side" cx="6" cy="8" r="2.4" />
+                <path className="online-icon-side" d="M1 19c0-3 2.2-5 5-5s5 2 5 5z" />
+                <circle className="online-icon-side" cx="18" cy="8" r="2.4" />
+                <path className="online-icon-side" d="M13 19c0-3 2.2-5 5-5s5 2 5 5z" />
+                <circle className="online-icon-front" cx="12" cy="8.5" r="3" />
+                <path className="online-icon-front" d="M6 21c0-3.6 2.7-6 6-6s6 2.4 6 6z" />
               </svg>
               <span key={onlineCount} className="online-count">
                 {onlineCount}
@@ -407,7 +407,7 @@ export default function MainPage({ user, onLogout }) {
           <div className="header-widgets">
             {/* Days Together */}
             <button className="widget-chip" title="Edit anniversary" onClick={() => openWidgetModal('anniversary')}>
-              <span className="widget-chip-icon"><CalendarHeartIcon size={18} /></span>
+              <span className="widget-chip-icon"><CalendarHeartIcon /></span>
               <span className="widget-chip-body">
                 <span className="widget-chip-label">Days Together</span>
                 <span className="widget-chip-value">{togetherValue}</span>
@@ -416,7 +416,7 @@ export default function MainPage({ user, onLogout }) {
 
             {/* Our Time */}
             <button className="widget-chip" title="Edit time zones" onClick={() => openWidgetModal('timezone')}>
-              <span className="widget-chip-icon"><ClockIcon size={18} /></span>
+              <span className="widget-chip-icon"><ClockIcon /></span>
               <span className="widget-chip-body">
                 <span className="widget-chip-label">Our Time</span>
                 <span className="widget-time-row">
@@ -438,7 +438,7 @@ export default function MainPage({ user, onLogout }) {
 
             {/* Next Meet-up */}
             <button className="widget-chip" title="Edit meet-up date" onClick={() => openWidgetModal('meetup')}>
-              <span className="widget-chip-icon"><HeartIcon size={18} /></span>
+              <span className="widget-chip-icon"><HeartIcon /></span>
               <span className="widget-chip-body">
                 <span className="widget-chip-label">Next Meet-up</span>
                 <span className="widget-chip-value">{meetValue}</span>
@@ -449,20 +449,29 @@ export default function MainPage({ user, onLogout }) {
           <div className="burger-menu-container">
             {/* Glowing Login Notification Tooltip */}
             {showLoginTip && (
-              <div className="login-tip-badge">
-                <span>Log in your account</span>
+              <div className="login-tip-badge" role="status">
+                <span className="tip-icon">
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="12" cy="7" r="4"></circle>
+                  </svg>
+                </span>
+                <span className="tip-text">
+                  <strong>Log in to your account</strong>
+                  <small>Save your dates and memories</small>
+                </span>
                 <div className="tip-arrow"></div>
               </div>
             )}
 
             <button className={`burger-btn ${menuOpen ? 'open' : ''} ${showLoginTip ? 'glowing-burger' : ''}`} onClick={handleToggleMenu}>
               {menuOpen && !isClosing ? (
-                <svg className="animated-svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <svg className="animated-svg-icon icon-bold" viewBox="0 0 24 24">
                   <line x1="18" y1="6" x2="6" y2="18"></line>
                   <line x1="6" y1="6" x2="18" y2="18"></line>
                 </svg>
               ) : (
-                <svg className="animated-svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <svg className="animated-svg-icon icon-bold" viewBox="0 0 24 24">
                   <line x1="3" y1="12" x2="21" y2="12"></line>
                   <line x1="3" y1="6" x2="21" y2="6"></line>
                   <line x1="3" y1="18" x2="21" y2="18"></line>
@@ -502,7 +511,7 @@ export default function MainPage({ user, onLogout }) {
           {/* 1. Live Call - ACTIVE */}
           <button className="menu-card" onClick={() => handleFeatureNavigate('/live-call')}>
             <div className="card-icon-wrapper">
-              <svg className="animated-svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <svg className="animated-svg-icon" viewBox="0 0 24 24">
                 <polygon points="23 7 16 12 23 17 23 7"></polygon>
                 <rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect>
               </svg>
@@ -518,7 +527,7 @@ export default function MainPage({ user, onLogout }) {
             <span className="pulsing-badge">Most Visited</span>
             <button className="menu-card photobooth-highlight" onClick={() => handleFeatureNavigate('/photobooth')}>
               <div className="card-icon-wrapper">
-                <svg className="animated-svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <svg className="animated-svg-icon" viewBox="0 0 24 24">
                   <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
                   <circle cx="12" cy="13" r="4"></circle>
                 </svg>
@@ -535,7 +544,7 @@ export default function MainPage({ user, onLogout }) {
             <span className="soon-badge">Soon</span>
             <button className="menu-card coming-soon" disabled>
               <div className="card-icon-wrapper">
-                <svg className="animated-svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <svg className="animated-svg-icon" viewBox="0 0 24 24">
                   <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
                 </svg>
               </div>
@@ -551,7 +560,7 @@ export default function MainPage({ user, onLogout }) {
             <span className="soon-badge">Soon</span>
             <button className="menu-card coming-soon" disabled>
               <div className="card-icon-wrapper">
-                <svg className="animated-svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <svg className="animated-svg-icon" viewBox="0 0 24 24">
                   <rect x="2" y="6" width="20" height="12" rx="2"></rect>
                   <path d="M6 12h4"></path>
                   <path d="M8 10v4"></path>
@@ -571,7 +580,7 @@ export default function MainPage({ user, onLogout }) {
             <span className="soon-badge">Soon</span>
             <button className="menu-card coming-soon" disabled>
               <div className="card-icon-wrapper">
-                <svg className="animated-svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <svg className="animated-svg-icon" viewBox="0 0 24 24">
                   <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
                 </svg>
               </div>
@@ -582,22 +591,19 @@ export default function MainPage({ user, onLogout }) {
             </button>
           </div>
 
-          {/* 6. User Profile */}
-          <div className="menu-card-wrapper">
-            <span className="soon-badge">Soon</span>
-            <button className="menu-card coming-soon" disabled>
-              <div className="card-icon-wrapper">
-                <svg className="animated-svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                  <circle cx="12" cy="7" r="4"></circle>
-                </svg>
-              </div>
-              <div className="card-info">
-                <h3>User Profile</h3>
-                <p>View your account settings</p>
-              </div>
-            </button>
-          </div>
+          {/* 6. User Profile - ACTIVE */}
+          <button className="menu-card" onClick={() => handleFeatureNavigate('/profile')}>
+            <div className="card-icon-wrapper">
+              <svg className="animated-svg-icon" viewBox="0 0 24 24">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                <circle cx="12" cy="7" r="4"></circle>
+              </svg>
+            </div>
+            <div className="card-info">
+              <h3>User Profile</h3>
+              <p>View your account settings</p>
+            </div>
+          </button>
         </div>
       </main>
 
@@ -605,10 +611,10 @@ export default function MainPage({ user, onLogout }) {
       {widgetModal && (
         <div className="modal-overlay" onClick={closeWidgetModal}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-icon">
-              {widgetModal === 'anniversary' && <CalendarHeartIcon size={32} color="#ff4d4d" />}
-              {widgetModal === 'timezone' && <ClockIcon size={32} color="#ff4d4d" />}
-              {widgetModal === 'meetup' && <HeartIcon size={32} color="#ff4d4d" />}
+            <div className="modal-icon modal-icon-sm">
+              {widgetModal === 'anniversary' && <CalendarHeartIcon />}
+              {widgetModal === 'timezone' && <ClockIcon />}
+              {widgetModal === 'meetup' && <HeartIcon />}
             </div>
 
             {widgetModal === 'anniversary' && (
@@ -700,7 +706,7 @@ export default function MainPage({ user, onLogout }) {
         <div className="modal-overlay" onClick={() => setShowAboutModal(false)}>
           <div className="modal-content about-modal-content" onClick={(e) => e.stopPropagation()}>
             <div className="modal-icon">
-              <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#ff4d4d" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <svg className="icon-svg icon-bold" viewBox="0 0 24 24">
                 <circle cx="12" cy="12" r="10"></circle>
                 <line x1="12" y1="16" x2="12" y2="12"></line>
                 <line x1="12" y1="8" x2="12.01" y2="8"></line>
@@ -722,7 +728,7 @@ export default function MainPage({ user, onLogout }) {
         <div className="modal-overlay" onClick={() => setShowContactModal(false)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <div className="modal-icon">
-              <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#ff4d4d" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <svg className="icon-svg icon-bold" viewBox="0 0 24 24">
                 <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
                 <polyline points="22,6 12,13 2,6"></polyline>
               </svg>
@@ -744,7 +750,7 @@ export default function MainPage({ user, onLogout }) {
         <div className="modal-overlay" onClick={() => setShowDeveloperModal(false)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <div className="modal-icon">
-              <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#ff4d4d" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <svg className="icon-svg icon-bold" viewBox="0 0 24 24">
                 <polyline points="16 18 22 12 16 6"></polyline>
                 <polyline points="8 6 2 12 8 18"></polyline>
               </svg>
@@ -763,7 +769,7 @@ export default function MainPage({ user, onLogout }) {
         <div className="modal-overlay" onClick={() => setShowSettingsModal(false)}>
           <div className="modal-content settings-modal-content" onClick={(e) => e.stopPropagation()}>
             <div className="modal-icon">
-              <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#ff4d4d" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <svg className="icon-svg icon-bold" viewBox="0 0 24 24">
                 <circle cx="12" cy="12" r="3"></circle>
                 <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06-.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
               </svg>

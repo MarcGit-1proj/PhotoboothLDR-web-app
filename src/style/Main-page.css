@@ -131,6 +131,56 @@
   height: 22px;
 }
 
+/* ===== SVG ICONS (dating nakasulat sa JSX) ===== */
+.icon-svg,
+.animated-svg-icon {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.icon-svg {
+  width: 24px;
+  height: 24px;
+}
+
+.icon-bold {
+  stroke-width: 2.5;
+}
+
+.widget-chip-icon .icon-svg {
+  width: 18px;
+  height: 18px;
+}
+
+.modal-icon .icon-svg {
+  width: 36px;
+  height: 36px;
+}
+
+.modal-icon.modal-icon-sm .icon-svg {
+  width: 32px;
+  height: 32px;
+}
+
+/* Online users icon */
+.online-icon {
+  width: 20px;
+  height: 20px;
+  fill: #22c55e;
+}
+
+.online-icon-side {
+  opacity: 0.65;
+}
+
+.online-icon-front {
+  stroke: #150f1c;
+  stroke-width: 1.2;
+}
+
 .dropdown-menu {
   position: absolute;
   right: 0;
@@ -559,6 +609,7 @@
   width: 60px;
   height: 60px;
   background: rgba(255, 77, 77, 0.1);
+  color: #ff4d4d;
   border-radius: 50%;
 }
 
@@ -1066,6 +1117,11 @@ body.light-mode .modal-secondary-btn:hover {
 .tip-icon svg {
   width: 18px;
   height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 .tip-text {
@@ -1131,4 +1187,407 @@ body.light-mode .modal-secondary-btn:hover {
   .tip-arrow {
     display: none;
   }
+}
+
+/* ===== USER PROFILE PAGE ===== */
+.profile-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 24px 40px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.profile-back {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #f4f4f5;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.profile-back:hover {
+  background: rgba(255, 255, 255, 0.1);
+  transform: translateX(-2px);
+}
+
+.profile-back svg {
+  width: 20px;
+  height: 20px;
+}
+
+.profile-title {
+  margin: 0;
+  font-size: 1.6rem;
+  font-weight: 800;
+  letter-spacing: 0.3px;
+}
+
+.profile-main {
+  width: 100%;
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 32px 20px 56px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  box-sizing: border-box;
+}
+
+.profile-loading {
+  text-align: center;
+  color: #a1a1aa;
+  margin: 40px 0;
+}
+
+.profile-card {
+  background: #18181b;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 16px;
+  padding: 24px;
+}
+
+.profile-card-title {
+  margin: 0 0 16px 0;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #f4f4f5;
+}
+
+/* Hero: avatar + pangalan */
+.profile-hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  text-align: center;
+}
+
+.profile-avatar {
+  width: 84px;
+  height: 84px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.2rem;
+  font-weight: 800;
+  color: #ffffff;
+  background: linear-gradient(135deg, #c084fc, #ec4899, #f43f5e);
+  box-shadow: 0 10px 24px -8px rgba(236, 72, 153, 0.5);
+}
+
+.profile-name {
+  margin: 0;
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #f4f4f5;
+  word-break: break-word;
+}
+
+.profile-badge {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  padding: 4px 12px;
+  border-radius: 999px;
+}
+
+.profile-badge.account {
+  background: rgba(34, 197, 94, 0.12);
+  border: 1px solid rgba(34, 197, 94, 0.35);
+  color: #4ade80;
+}
+
+.profile-badge.guest {
+  background: #3f3f46;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #d4d4d8;
+}
+
+/* Mga row ng impormasyon */
+.profile-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 12px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.profile-row:last-of-type {
+  border-bottom: none;
+}
+
+.profile-row-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #c4b5fd;
+  flex-shrink: 0;
+  padding-top: 2px;
+}
+
+.profile-row-value {
+  font-size: 0.95rem;
+  color: #f4f4f5;
+  text-align: right;
+  min-width: 0;
+  word-break: break-word;
+}
+
+.profile-value-edit {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.profile-link-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  font-family: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #fb7185;
+  cursor: pointer;
+}
+
+.profile-link-btn:hover {
+  text-decoration: underline;
+}
+
+.profile-hint {
+  margin: 12px 0 16px 0;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: #a1a1aa;
+}
+
+.profile-card .profile-hint:last-child {
+  margin-bottom: 0;
+}
+
+/* Nickname edit form */
+.profile-nick-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: min(280px, 60vw);
+}
+
+.profile-input {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 0.95rem;
+  font-family: inherit;
+  color: #f4f4f5;
+  color-scheme: dark;
+  width: 100%;
+  box-sizing: border-box;
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.profile-input:focus {
+  border-color: #ec4899;
+  box-shadow: 0 0 0 3px rgba(236, 72, 153, 0.2);
+}
+
+.profile-nick-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+/* Buttons */
+.profile-btn {
+  border-radius: 10px;
+  padding: 10px 18px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: background 0.2s ease, transform 0.15s ease;
+}
+
+.profile-btn:hover {
+  transform: translateY(-2px);
+}
+
+.profile-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.profile-btn.full {
+  width: 100%;
+  padding: 12px 24px;
+  font-size: 0.95rem;
+}
+
+.profile-btn.primary {
+  background: #ff4d4d;
+  color: #ffffff;
+}
+
+.profile-btn.primary:hover:not(:disabled) {
+  background: #e03e3e;
+}
+
+.profile-btn.secondary {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.1);
+  color: #d4d4d8;
+}
+
+.profile-btn.secondary:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.profile-btn.danger {
+  background: rgba(255, 77, 77, 0.12);
+  border-color: rgba(255, 77, 77, 0.35);
+  color: #ff5c5c;
+}
+
+.profile-btn.danger:hover:not(:disabled) {
+  background: rgba(255, 77, 77, 0.22);
+}
+
+/* Messages */
+.profile-error {
+  margin: 4px 0 8px 0;
+  font-size: 0.85rem;
+  color: #ff6b6b;
+  text-align: right;
+}
+
+.profile-notice {
+  margin: 4px 0 8px 0;
+  font-size: 0.85rem;
+  color: #4ade80;
+  text-align: right;
+}
+
+/* Phones */
+@media (max-width: 640px) {
+  .profile-header {
+    padding: 16px;
+  }
+
+  .profile-title {
+    font-size: 1.4rem;
+  }
+
+  .profile-main {
+    padding: 20px 16px 40px;
+  }
+
+  .profile-card {
+    padding: 18px;
+  }
+
+  .profile-row {
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .profile-row-value {
+    text-align: left;
+  }
+
+  .profile-nick-form {
+    width: 100%;
+  }
+
+  .profile-error,
+  .profile-notice {
+    text-align: left;
+  }
+}
+
+/* Light Mode: User Profile */
+body.light-mode .profile-header {
+  border-bottom-color: rgba(0, 0, 0, 0.08);
+}
+
+body.light-mode .profile-back {
+  background: rgba(0, 0, 0, 0.04);
+  border-color: rgba(0, 0, 0, 0.1);
+  color: #18181b;
+}
+
+body.light-mode .profile-back:hover {
+  background: rgba(0, 0, 0, 0.08);
+}
+
+body.light-mode .profile-card {
+  background: #ffffff;
+  border-color: rgba(0, 0, 0, 0.08);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+}
+
+body.light-mode .profile-card-title,
+body.light-mode .profile-name,
+body.light-mode .profile-row-value {
+  color: #18181b;
+}
+
+body.light-mode .profile-row {
+  border-bottom-color: rgba(0, 0, 0, 0.08);
+}
+
+body.light-mode .profile-row-label {
+  color: #7c3aed;
+}
+
+body.light-mode .profile-hint,
+body.light-mode .profile-loading {
+  color: #52525b;
+}
+
+body.light-mode .profile-badge.account {
+  color: #16a34a;
+}
+
+body.light-mode .profile-badge.guest {
+  background: #e4e4e7;
+  color: #52525b;
+  border-color: rgba(0, 0, 0, 0.08);
+}
+
+body.light-mode .profile-input {
+  background: rgba(0, 0, 0, 0.03);
+  border-color: rgba(0, 0, 0, 0.12);
+  color: #18181b;
+  color-scheme: light;
+}
+
+body.light-mode .profile-btn.secondary {
+  background: rgba(0, 0, 0, 0.05);
+  border-color: rgba(0, 0, 0, 0.1);
+  color: #3f3f46;
+}
+
+body.light-mode .profile-btn.secondary:hover:not(:disabled) {
+  background: rgba(0, 0, 0, 0.1);
+}
+
+body.light-mode .profile-btn.danger {
+  color: #e03e3e;
+}
+
+body.light-mode .profile-notice {
+  color: #16a34a;
 }
