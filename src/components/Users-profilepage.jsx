@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
-import '../style/Main-page.css';
+import '../style/Users-profilepage.css';
 
 const COUPLE_STORAGE_KEY = 'snapsync_couple';
 const AVATAR_BUCKET = 'avatars';
@@ -120,9 +120,17 @@ const CheckIcon = () => (
   </svg>
 );
 
-const SparkleIcon = () => (
-  <svg className="sparkle-svg" viewBox="0 0 24 24" aria-hidden="true">
-    <path d="M12 1.5l2.6 8 8 2.5-8 2.5-2.6 8-2.6-8-8-2.5 8-2.5z"></path>
+const PencilIcon = () => (
+  <svg className="icon-svg" viewBox="0 0 24 24" aria-hidden="true">
+    <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5z"></path>
+  </svg>
+);
+
+const BulbIcon = () => (
+  <svg className="icon-svg" viewBox="0 0 24 24" aria-hidden="true">
+    <path d="M9 18h6"></path>
+    <path d="M10 22h4"></path>
+    <path d="M12 2a7 7 0 0 0-4 12.7c.5.4.8 1 .8 1.7v.1a.5.5 0 0 0 .5.5h5.4a.5.5 0 0 0 .5-.5v-.1c0-.7.3-1.3.8-1.7A7 7 0 0 0 12 2z"></path>
   </svg>
 );
 
@@ -403,6 +411,13 @@ export default function UsersProfilePage() {
             {/* Hero */}
             <section className="profile-card profile-hero">
               <div className="profile-hero-inner">
+                {isAccount && !editing && (
+                  <button className="profile-edit-btn" onClick={startEdit} disabled={busy}>
+                    <PencilIcon />
+                    Edit
+                  </button>
+                )}
+
                 {/* Avatar */}
                 <div className="profile-avatar-ring">
                   <div className="profile-avatar">
@@ -440,8 +455,13 @@ export default function UsersProfilePage() {
                   )}
                 </div>
 
-                {/* Pangalan, ID, badge */}
+                {/* Badge, Pangalan, ID */}
                 <div className="profile-identity">
+                  <span className={`profile-badge ${isAccount ? 'account' : 'guest'}`}>
+                    <UserIcon />
+                    {isAccount ? 'Account' : 'Guest'}
+                  </span>
+
                   {editing ? (
                     <input
                       className="profile-input profile-name-input"
@@ -485,17 +505,11 @@ export default function UsersProfilePage() {
                       )}
                     </div>
                   )}
-
-                  <span className={`profile-badge ${isAccount ? 'account' : 'guest'}`}>
-                    <UserIcon />
-                    {isAccount ? 'Account' : 'Guest'}
-                  </span>
                 </div>
 
                 {/* Divider */}
                 <div className="profile-divider" aria-hidden="true">
                   <span className="profile-divider-line"></span>
-                  <SparkleIcon />
                   <span className="profile-divider-line"></span>
                 </div>
 
@@ -529,7 +543,6 @@ export default function UsersProfilePage() {
                         </p>
                         <div className="profile-bio-ornament" aria-hidden="true">
                           <span className="profile-ornament-line"></span>
-                          <SparkleIcon />
                           <span className="profile-ornament-line"></span>
                         </div>
                       </>
@@ -541,10 +554,10 @@ export default function UsersProfilePage() {
               {error && <p className="profile-error" role="alert">{error}</p>}
               {notice && <p className="profile-notice" role="status">{notice}</p>}
 
-              {isAccount && (
+              {isAccount && (editing || uploading) && (
                 <div className="profile-hero-footer">
                   <div className="profile-footer-left">
-                    {editing ? (
+                    {editing && (
                       <>
                         <button className="profile-btn secondary" onClick={cancelEdit} disabled={saving}>
                           Cancel
@@ -553,21 +566,24 @@ export default function UsersProfilePage() {
                           {saving ? 'Saving...' : 'Save'}
                         </button>
                       </>
-                    ) : (
-                      <button className="profile-edit-btn" onClick={startEdit} disabled={busy}>
-                        Edit
-                      </button>
                     )}
                   </div>
 
                   <div className="profile-footer-right">
                     {uploading && <span className="profile-id-status">Working...</span>}
-                    {avatarUrl && !uploading && (
+                    {editing && avatarUrl && !uploading && (
                       <button className="profile-link-btn" onClick={handleRemovePhoto} disabled={busy}>
                         Remove photo
                       </button>
                     )}
                   </div>
+                </div>
+              )}
+
+              {isAccount && !editing && (
+                <div className="profile-footer-hint">
+                  <BulbIcon />
+                  <span>Use your unique code to connect with another account</span>
                 </div>
               )}
             </section>
