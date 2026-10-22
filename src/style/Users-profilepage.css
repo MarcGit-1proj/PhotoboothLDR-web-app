@@ -37,6 +37,66 @@
   gap: 16px;
   padding: 24px 40px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  position: relative;
+}
+
+/* Settings gear icon + dropdown, sa kanang-itaas ng header */
+.profile-settings-trigger {
+  position: relative;
+  margin-left: auto;
+}
+
+.profile-settings-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #f4f4f5;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.profile-settings-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  transform: rotate(20deg);
+}
+
+.profile-settings-dropdown {
+  position: absolute;
+  top: calc(100% + 12px);
+  right: 0;
+  width: 360px;
+  max-width: 88vw;
+  max-height: 80vh;
+  overflow-y: auto;
+  background: #18181b;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 16px 40px -8px rgba(0, 0, 0, 0.55);
+  z-index: 200;
+  animation: settingsDropdownIn 0.15s ease-out;
+}
+
+@keyframes settingsDropdownIn {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 640px) {
+  .profile-settings-dropdown {
+    position: fixed;
+    top: auto;
+    bottom: 16px;
+    left: 16px;
+    right: 16px;
+    width: auto;
+    max-width: none;
+  }
 }
 
 .profile-back {
@@ -72,12 +132,9 @@
 
 .profile-main {
   width: 100%;
-  max-width: 860px;
+  max-width: 1180px;
   margin: 0 auto;
   padding: 32px 20px 56px;
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
   box-sizing: border-box;
 }
 
@@ -85,6 +142,16 @@
   text-align: center;
   color: #a1a1aa;
   margin: 40px 0;
+}
+
+/* ----- Main column (single column; Settings ngayon ay dropdown na lang mula sa header) ----- */
+.profile-main-col {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-width: 0;
+  max-width: 760px;
+  margin: 0 auto;
 }
 
 .profile-card {
@@ -96,9 +163,64 @@
 
 .profile-card-title {
   margin: 0 0 16px 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
   font-size: 1rem;
   font-weight: 700;
   color: #f4f4f5;
+}
+
+.profile-card-title-icon {
+  display: inline-flex;
+  color: #f472b6;
+}
+
+.profile-card-title-icon .icon-svg {
+  width: 18px;
+  height: 18px;
+}
+
+.profile-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.profile-card-header .profile-card-title {
+  margin: 0;
+}
+
+/* Collapsible "Our details" toggle */
+.profile-collapse-toggle {
+  width: 100%;
+  background: none;
+  border: none;
+  padding: 0;
+  margin-bottom: 16px;
+  cursor: pointer;
+  color: inherit;
+  font-family: inherit;
+}
+
+.profile-collapse-toggle .profile-card-title {
+  margin-bottom: 0;
+}
+
+.chevron-icon {
+  width: 18px;
+  height: 18px;
+  color: #a1a1aa;
+  transition: transform 0.2s ease;
+}
+
+.chevron-icon.open {
+  transform: rotate(0deg);
+}
+
+.chevron-icon:not(.open) {
+  transform: rotate(180deg);
 }
 
 /* ----- Hero ----- */
@@ -316,9 +438,17 @@
 .profile-bio {
   flex: 1 1 0;
   min-width: 0;
+  align-self: flex-start;
   display: flex;
   flex-direction: column;
   gap: 10px;
+}
+
+.profile-bio-label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
 }
 
 .profile-bio-label {
@@ -337,16 +467,6 @@
   height: 18px;
 }
 
-.profile-bio-box {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  padding: 18px 20px 14px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 16px;
-  background: rgba(255, 255, 255, 0.02);
-}
-
 .profile-bio-text {
   margin: 0;
   font-size: 0.98rem;
@@ -361,21 +481,6 @@
   font-style: italic;
 }
 
-.profile-bio-ornament {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  color: #ec4899;
-}
-
-.profile-ornament-line {
-  width: 28px;
-  height: 1px;
-  background: currentColor;
-  opacity: 0.6;
-}
-
 .profile-textarea {
   resize: vertical;
   min-height: 92px;
@@ -388,13 +493,14 @@
   color: #a1a1aa;
 }
 
-/* Footer: Edit sa kaliwa, upload sa kanan */
+/* Footer: Cancel/Save sa kaliwa, upload status/Remove photo sa kanan */
 .profile-hero-footer {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
   padding: 0 6px;
+  margin-top: 6px;
 }
 
 .profile-footer-left,
@@ -404,10 +510,8 @@
   gap: 12px;
 }
 
+/* Edit button (inline pill, ginagamit sa Bio at sa Account card) */
 .profile-edit-btn {
-  position: absolute;
-  top: 20px;
-  right: 20px;
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -421,6 +525,11 @@
   color: #f4f4f5;
   cursor: pointer;
   transition: background 0.2s ease, border-color 0.2s ease, transform 0.15s ease;
+}
+
+.profile-edit-btn.small {
+  padding: 5px 12px;
+  font-size: 0.75rem;
 }
 
 .profile-edit-btn .icon-svg {
@@ -440,30 +549,11 @@
   cursor: not-allowed;
 }
 
-/* Hint sa ilalim ng footer, naka-center na may bulb icon */
-.profile-footer-hint {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  font-size: 0.8rem;
-  color: #a1a1aa;
-  font-style: italic;
-  text-align: center;
-}
-
-.profile-footer-hint .icon-svg {
-  width: 16px;
-  height: 16px;
-  flex-shrink: 0;
-}
-
-/* Upload button: nasa ibabang gilid ng avatar */
+/* Upload button: nasa ibabang-kanang gilid ng avatar */
 .profile-avatar-upload {
   position: absolute;
-  left: 50%;
+  right: 2px;
   bottom: 2px;
-  transform: translateX(-50%);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -480,7 +570,7 @@
 }
 
 .profile-avatar-upload:hover:not(:disabled) {
-  transform: translateX(-50%) translateY(-2px);
+  transform: translateY(-2px);
   box-shadow: 0 10px 20px -4px rgba(236, 72, 153, 0.75);
 }
 
@@ -538,6 +628,12 @@
   text-align: right;
   min-width: 0;
   word-break: break-word;
+}
+
+.profile-inline-input {
+  text-align: right;
+  padding: 6px 10px;
+  font-size: 0.9rem;
 }
 
 .profile-link-btn {
@@ -651,17 +747,247 @@
 
 /* Messages */
 .profile-error {
-  margin: 0;
+  margin: 10px 0 0;
   padding: 0 6px;
   font-size: 0.85rem;
   color: #ff6b6b;
 }
 
 .profile-notice {
-  margin: 0;
+  margin: 10px 0 0;
   padding: 0 6px;
   font-size: 0.85rem;
   color: #4ade80;
+}
+
+/* Hint sa ilalim ng hero, naka-center na may bulb icon */
+.profile-footer-hint {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 0.8rem;
+  color: #a1a1aa;
+  font-style: italic;
+  text-align: center;
+  margin-top: 6px;
+}
+
+.profile-footer-hint .icon-svg {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+
+/* ===== SETTINGS DROPDOWN (laman ng .profile-settings-dropdown) ===== */
+.settings-subtitle {
+  margin: 18px 0 10px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: #f472b6;
+}
+
+.setting-toggle-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.setting-toggle-row:last-of-type {
+  border-bottom: none;
+}
+
+.setting-toggle-icon {
+  display: inline-flex;
+  flex-shrink: 0;
+  color: #f472b6;
+  margin-top: 2px;
+}
+
+.setting-toggle-icon .icon-svg {
+  width: 20px;
+  height: 20px;
+}
+
+.setting-toggle-text {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  flex: 1;
+  min-width: 0;
+  text-align: left;
+}
+
+.setting-toggle-title {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #f4f4f5;
+}
+
+.setting-toggle-desc {
+  font-size: 0.78rem;
+  line-height: 1.4;
+  color: #a1a1aa;
+}
+
+/* Toggle switch (checkbox) */
+.toggle-switch {
+  position: relative;
+  flex-shrink: 0;
+  display: inline-block;
+  width: 42px;
+  height: 24px;
+  margin-top: 2px;
+}
+
+.toggle-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.toggle-switch .slider {
+  position: absolute;
+  cursor: pointer;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.14);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 999px;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.toggle-switch .slider::before {
+  content: "";
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  left: 2px;
+  top: 2px;
+  background: #f4f4f5;
+  border-radius: 50%;
+  transition: transform 0.2s ease;
+}
+
+.toggle-switch input:checked + .slider {
+  background: #ec4899;
+  border-color: #ec4899;
+}
+
+.toggle-switch input:checked + .slider::before {
+  transform: translateX(18px);
+}
+
+/* Account actions (Log out / Delete account) */
+.account-action-row {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  background: none;
+  border-left: none;
+  border-right: none;
+  border-top: none;
+  cursor: pointer;
+  font-family: inherit;
+  color: inherit;
+  text-align: left;
+}
+
+.account-action-row:last-of-type {
+  border-bottom: none;
+}
+
+.account-action-row .setting-toggle-icon {
+  color: #f472b6;
+}
+
+.account-action-row.danger .setting-toggle-icon {
+  color: #ff5c5c;
+}
+
+.account-action-row.danger .setting-toggle-title {
+  color: #ff5c5c;
+}
+
+.account-action-row > .icon-svg {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  color: #71717a;
+}
+
+/* ===== DELETE CONFIRMATION MODAL ===== */
+.profile-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(5px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+}
+
+.profile-modal-content {
+  background: #18181b;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  padding: 32px;
+  width: 100%;
+  max-width: 420px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+}
+
+.profile-modal-icon {
+  margin-bottom: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  background: rgba(255, 77, 77, 0.1);
+  color: #ff5c5c;
+  border-radius: 50%;
+}
+
+.profile-modal-content h2 {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: #f4f4f5;
+  margin: 0 0 10px 0;
+}
+
+.profile-modal-text {
+  font-size: 0.92rem;
+  color: #a1a1aa;
+  line-height: 1.5;
+  margin: 0;
+  width: 100%;
+}
+
+.profile-modal-actions {
+  display: flex;
+  gap: 10px;
+  width: 100%;
+  margin-top: 20px;
+}
+
+.profile-modal-actions .profile-btn {
+  flex: 1;
 }
 
 /* Tablet at phones: magkakapatong ang mga bahagi ng hero */
@@ -672,13 +998,6 @@
     gap: 22px;
     padding: 26px 18px;
     text-align: center;
-  }
-
-  .profile-edit-btn {
-    top: 14px;
-    right: 14px;
-    padding: 6px 12px;
-    font-size: 0.78rem;
   }
 
   .profile-identity {
@@ -741,6 +1060,10 @@
   .profile-row-value {
     text-align: left;
   }
+
+  .profile-inline-input {
+    text-align: left;
+  }
 }
 
 /* Light Mode: User Profile */
@@ -756,6 +1079,22 @@ body.light-mode .profile-back {
 
 body.light-mode .profile-back:hover {
   background: rgba(0, 0, 0, 0.08);
+}
+
+body.light-mode .profile-settings-btn {
+  background: rgba(0, 0, 0, 0.04);
+  border-color: rgba(0, 0, 0, 0.1);
+  color: #18181b;
+}
+
+body.light-mode .profile-settings-btn:hover {
+  background: rgba(0, 0, 0, 0.08);
+}
+
+body.light-mode .profile-settings-dropdown {
+  background: #ffffff;
+  border-color: rgba(0, 0, 0, 0.08);
+  box-shadow: 0 16px 40px -8px rgba(0, 0, 0, 0.18);
 }
 
 body.light-mode .profile-card {
@@ -821,11 +1160,6 @@ body.light-mode .profile-bio-label {
   color: #db2777;
 }
 
-body.light-mode .profile-bio-box {
-  border-color: rgba(0, 0, 0, 0.1);
-  background: rgba(0, 0, 0, 0.02);
-}
-
 body.light-mode .profile-bio-text {
   color: #3f3f46;
 }
@@ -873,6 +1207,62 @@ body.light-mode .profile-btn.danger {
 
 body.light-mode .profile-notice {
   color: #16a34a;
+}
+
+body.light-mode .profile-card-title-icon {
+  color: #db2777;
+}
+
+body.light-mode .settings-subtitle {
+  color: #db2777;
+}
+
+body.light-mode .setting-toggle-row,
+body.light-mode .account-action-row {
+  border-bottom-color: rgba(0, 0, 0, 0.08);
+}
+
+body.light-mode .setting-toggle-icon {
+  color: #db2777;
+}
+
+body.light-mode .setting-toggle-title {
+  color: #18181b;
+}
+
+body.light-mode .setting-toggle-desc {
+  color: #52525b;
+}
+
+body.light-mode .toggle-switch .slider {
+  background: rgba(0, 0, 0, 0.12);
+  border-color: rgba(0, 0, 0, 0.12);
+}
+
+body.light-mode .toggle-switch .slider::before {
+  background: #ffffff;
+}
+
+body.light-mode .account-action-row.danger .setting-toggle-icon,
+body.light-mode .account-action-row.danger .setting-toggle-title {
+  color: #e03e3e;
+}
+
+body.light-mode .account-action-row > .icon-svg {
+  color: #a1a1aa;
+}
+
+body.light-mode .profile-modal-content {
+  background: #ffffff;
+  border-color: rgba(0, 0, 0, 0.08);
+}
+
+body.light-mode .profile-modal-content h2 {
+  color: #18181b;
+}
+
+body.light-mode .profile-modal-text {
+  color: #52525b;
 }
 
 @media (max-width: 760px) {
