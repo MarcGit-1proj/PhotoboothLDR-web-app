@@ -232,8 +232,8 @@ export default function UsersProfilePage() {
   const [codeStatus, setCodeStatus] = useState('idle'); // idle | loading | ready | error
   const [copied, setCopied] = useState(false);
 
-  // Our details: collapsible
-  const [detailsOpen, setDetailsOpen] = useState(true);
+  // Our details: collapsible (sarado muna by default)
+  const [detailsOpen, setDetailsOpen] = useState(false);
 
   // Account card: editable (Facebook / other contact)
   const [editingAccount, setEditingAccount] = useState(false);

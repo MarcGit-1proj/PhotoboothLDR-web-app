@@ -89,13 +89,11 @@
 
 @media (max-width: 640px) {
   .profile-settings-dropdown {
-    position: fixed;
-    top: auto;
-    bottom: 16px;
-    left: 16px;
-    right: 16px;
-    width: auto;
+    top: calc(100% + 10px);
+    right: 0;
+    width: min(92vw, 340px);
     max-width: none;
+    padding: 16px;
   }
 }
 
