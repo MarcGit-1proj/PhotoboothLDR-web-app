@@ -209,6 +209,49 @@ const MailIcon = () => (
   </svg>
 );
 
+const PeopleIcon = () => (
+  <svg className="icon-svg" viewBox="0 0 24 24" aria-hidden="true">
+    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+    <circle cx="9" cy="7" r="4"></circle>
+    <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+    <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+  </svg>
+);
+
+const SearchIcon = () => (
+  <svg className="icon-svg" viewBox="0 0 24 24" aria-hidden="true">
+    <circle cx="11" cy="11" r="8"></circle>
+    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+  </svg>
+);
+
+const LinkIcon = () => (
+  <svg className="icon-svg" viewBox="0 0 24 24" aria-hidden="true">
+    <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+    <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+  </svg>
+);
+
+const BellIcon = () => (
+  <svg className="icon-svg" viewBox="0 0 24 24" aria-hidden="true">
+    <path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"></path>
+    <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+  </svg>
+);
+
+const XIcon = () => (
+  <svg className="icon-svg" viewBox="0 0 24 24" aria-hidden="true">
+    <line x1="18" y1="6" x2="6" y2="18"></line>
+    <line x1="6" y1="6" x2="18" y2="18"></line>
+  </svg>
+);
+
+const ChatIcon = () => (
+  <svg className="icon-svg" viewBox="0 0 24 24" aria-hidden="true">
+    <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path>
+  </svg>
+);
+
 const InfoRow = ({ label, children }) => (
   <div className="profile-row">
     <span className="profile-row-label">{label}</span>
@@ -220,6 +263,9 @@ export default function UsersProfilePage() {
   const navigate = useNavigate();
   const fileInputRef = useRef(null);
   const settingsRef = useRef(null);
+  const searchRef = useRef(null);
+  const notifRef = useRef(null);
+  const connectionsRef = useRef(null);
 
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState(null);
@@ -257,6 +303,25 @@ export default function UsersProfilePage() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleteBusy, setDeleteBusy] = useState(false);
   const [deleteError, setDeleteError] = useState('');
+
+  // Header: search by Code ID + Connect
+  const [searchCode, setSearchCode] = useState('');
+  const [searching, setSearching] = useState(false);
+  const [searchResult, setSearchResult] = useState(null);
+  const [searchError, setSearchError] = useState('');
+  const [connectBusy, setConnectBusy] = useState(false);
+  const [connectNotice, setConnectNotice] = useState('');
+
+  // Notifications
+  const [notifications, setNotifications] = useState([]);
+  const [notifOpen, setNotifOpen] = useState(false);
+  const [notifBusyId, setNotifBusyId] = useState('');
+
+  // My Connections (mga na-add/tinanggap na)
+  const [connections, setConnections] = useState([]);
+  const [connectionsOpen, setConnectionsOpen] = useState(false);
+  const [connectionsLoading, setConnectionsLoading] = useState(false);
+  const [expandedConnectionId, setExpandedConnectionId] = useState('');
 
   // Ilapat ang saved theme (kung direkta ang bukas sa /profile)
   useEffect(() => {
@@ -299,6 +364,31 @@ export default function UsersProfilePage() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [settingsOpen]);
 
+  // Isara ang Notifications dropdown kapag nag-click sa labas nito
+  useEffect(() => {
+    if (!notifOpen) return;
+    const handleClickOutside = (e) => {
+      if (notifRef.current && !notifRef.current.contains(e.target)) {
+        setNotifOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [notifOpen]);
+
+  // Isara ang My Connections dropdown kapag nag-click sa labas nito
+  useEffect(() => {
+    if (!connectionsOpen) return;
+    const handleClickOutside = (e) => {
+      if (connectionsRef.current && !connectionsRef.current.contains(e.target)) {
+        setConnectionsOpen(false);
+        setExpandedConnectionId('');
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [connectionsOpen]);
+
   // Ang "Continue without account" ay anonymous user, hindi totoong account
   const isAccount = !!user && !user.is_anonymous;
   const meta = user?.user_metadata || {};
@@ -336,6 +426,72 @@ export default function UsersProfilePage() {
   useEffect(() => {
     if (isAccount) loadFriendCode();
   }, [isAccount, loadFriendCode]);
+
+  // Kunin ang mga notification ng account
+  const loadNotifications = useCallback(async () => {
+    if (!user) return;
+    try {
+      const { data, error: notifErr } = await supabase
+        .from('notifications')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(20);
+      if (notifErr) throw notifErr;
+      setNotifications(data || []);
+    } catch {
+      /* tahimik na mag-fail, hindi kritikal sa page */
+    }
+  }, [user]);
+
+  useEffect(() => {
+    if (isAccount) loadNotifications();
+  }, [isAccount, loadNotifications]);
+
+  // Kunin ang listahan ng mga naka-connect na (My Connections)
+  const loadConnections = useCallback(async () => {
+    if (!user) return;
+    setConnectionsLoading(true);
+    try {
+      const { data, error: connErr } = await supabase.rpc('list_my_connections');
+      if (connErr) throw connErr;
+      setConnections(data || []);
+    } catch {
+      /* tahimik na mag-fail, hindi kritikal sa page */
+    } finally {
+      setConnectionsLoading(false);
+    }
+  }, [user]);
+
+  useEffect(() => {
+    if (isAccount) loadConnections();
+  }, [isAccount, loadConnections]);
+
+  // Live updates gamit ang Supabase Realtime (kapag may bagong notification)
+  useEffect(() => {
+    if (!isAccount || !user) return;
+    const channel = supabase
+      .channel(`notifications-${user.id}`)
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'notifications', filter: `user_id=eq.${user.id}` },
+        (payload) => setNotifications((prev) => [payload.new, ...prev])
+      )
+      .subscribe();
+    return () => supabase.removeChannel(channel);
+  }, [isAccount, user]);
+
+  const unreadCount = notifications.filter((n) => !n.is_read).length;
+
+  const timeAgo = (iso) => {
+    const diff = Math.max(0, Date.now() - new Date(iso).getTime());
+    const m = Math.floor(diff / 60000);
+    if (m < 1) return 'just now';
+    if (m < 60) return `${m}m ago`;
+    const h = Math.floor(m / 60);
+    if (h < 24) return `${h}h ago`;
+    return `${Math.floor(h / 24)}d ago`;
+  };
 
   const showNotice = (text) => {
     setNotice(text);
@@ -572,6 +728,112 @@ export default function UsersProfilePage() {
     window.location.assign('/');
   };
 
+  /* ----- Search by Code ID + Connect ----- */
+  const handleSearch = async (e) => {
+    e.preventDefault();
+    const code = searchCode.trim();
+    if (!code) return;
+    setSearching(true);
+    setSearchError('');
+    setSearchResult(null);
+    setConnectNotice('');
+    try {
+      const { data, error: searchErr } = await supabase.rpc('search_user_by_code', { p_code: code });
+      if (searchErr) throw searchErr;
+      const match = Array.isArray(data) ? data[0] : data;
+      if (!match) setSearchError('No account found with that code.');
+      else setSearchResult(match);
+    } catch (err) {
+      setSearchError((err && err.message) || 'Could not search right now.');
+    } finally {
+      setSearching(false);
+    }
+  };
+
+  const handleConnect = async () => {
+    setSearchError('');
+    setConnectNotice('');
+
+    let target = searchResult;
+
+    // Kung hindi pa na-search (hal. na-type lang ang code at direktang pinindot
+    // ang Connect nang hindi pinindot ang Enter), hanapin muna dito.
+    if (!target) {
+      const code = searchCode.trim();
+      if (!code) {
+        setSearchError('Type a code ID first.');
+        return;
+      }
+      setSearching(true);
+      try {
+        const { data, error: searchErr } = await supabase.rpc('search_user_by_code', { p_code: code });
+        if (searchErr) throw searchErr;
+        const match = Array.isArray(data) ? data[0] : data;
+        if (!match) {
+          setSearchError('No account found with that code.');
+          return;
+        }
+        target = match;
+        setSearchResult(match);
+      } catch (err) {
+        setSearchError((err && err.message) || 'Could not search right now.');
+        return;
+      } finally {
+        setSearching(false);
+      }
+    }
+
+    setConnectBusy(true);
+    try {
+      const { error: connectErr } = await supabase.rpc('send_connection_request', {
+        p_target_id: target.id
+      });
+      if (connectErr) throw connectErr;
+      setConnectNotice('Connection request sent.');
+      setSearchResult(null);
+      setSearchCode('');
+    } catch (err) {
+      setSearchError((err && err.message) || 'Could not send the request.');
+    } finally {
+      setConnectBusy(false);
+    }
+  };
+
+  /* ----- Notifications: accept / decline / dismiss ----- */
+  const handleNotifRespond = async (notif, accept) => {
+    setNotifBusyId(notif.id);
+    try {
+      const connectionId = notif.data?.connection_id;
+      if (connectionId) {
+        const { error: respondErr } = await supabase.rpc('respond_connection_request', {
+          p_connection_id: connectionId,
+          p_accept: accept
+        });
+        if (respondErr) throw respondErr;
+      }
+      await supabase.from('notifications').update({ is_read: true }).eq('id', notif.id);
+      setNotifications((prev) => prev.filter((n) => n.id !== notif.id));
+      if (accept) loadConnections();
+    } catch {
+      /* tahimik na mag-fail */
+    } finally {
+      setNotifBusyId('');
+    }
+  };
+
+  const handleNotifDismiss = async (notif) => {
+    setNotifBusyId(notif.id);
+    try {
+      await supabase.from('notifications').update({ is_read: true }).eq('id', notif.id);
+      setNotifications((prev) => prev.filter((n) => n.id !== notif.id));
+      if (notif.type === 'connection_accepted') loadConnections();
+    } catch {
+      /* tahimik na mag-fail */
+    } finally {
+      setNotifBusyId('');
+    }
+  };
+
   const couple = isAccount ? meta.couple || {} : readLocalCouple();
 
   const today = new Date();
@@ -592,85 +854,290 @@ export default function UsersProfilePage() {
         <h1 className="profile-title">User Profile</h1>
 
         {isAccount && (
-          <div className="profile-settings-trigger" ref={settingsRef}>
-            <button
-              className="profile-settings-btn"
-              onClick={() => setSettingsOpen((v) => !v)}
-              aria-label="Settings"
-              aria-expanded={settingsOpen}
-            >
-              <GearIcon />
-            </button>
+          <div className="profile-header-right">
+            <div className="profile-connections-trigger" ref={connectionsRef}>
+              <button
+                className="profile-connections-btn"
+                onClick={() => setConnectionsOpen((v) => !v)}
+                aria-label="My connections"
+                aria-expanded={connectionsOpen}
+              >
+                <PeopleIcon />
+                {connections.length > 0 && (
+                  <span className="profile-connections-badge">{connections.length}</span>
+                )}
+              </button>
 
-            {settingsOpen && (
-              <div className="profile-settings-dropdown">
-                <h3 className="profile-card-title">
-                  <span className="profile-card-title-icon"><GearIcon /></span>
-                  Settings
-                </h3>
-
-                {settingsError && <p className="profile-error" role="alert">{settingsError}</p>}
-
-                <div className="setting-toggle-row">
-                  <span className="setting-toggle-icon"><ShieldIcon /></span>
-                  <div className="setting-toggle-text">
-                    <span className="setting-toggle-title">Make profile private</span>
-                    <span className="setting-toggle-desc">Only you can see your profile, details and code ID.</span>
+              {connectionsOpen && (
+                <div className="profile-connections-dropdown">
+                  <div className="profile-notif-header">
+                    <span className="profile-notif-title">
+                      <PeopleIcon /> My Connections
+                      {connections.length > 0 && (
+                        <span className="profile-notif-count">{connections.length}</span>
+                      )}
+                    </span>
+                    <button
+                      className="profile-notif-close"
+                      onClick={() => {
+                        setConnectionsOpen(false);
+                        setExpandedConnectionId('');
+                      }}
+                      aria-label="Close"
+                    >
+                      <XIcon />
+                    </button>
                   </div>
-                  <label className="toggle-switch">
-                    <input
-                      type="checkbox"
-                      checked={profilePrivate}
-                      onChange={() => handleToggleSetting('profile_private', profilePrivate)}
-                    />
-                    <span className="slider"></span>
-                  </label>
+
+                  {connectionsLoading ? (
+                    <p className="profile-hint">Loading...</p>
+                  ) : connections.length === 0 ? (
+                    <p className="profile-hint">
+                      No connections yet. Search a Code ID and press Connect to add someone.
+                    </p>
+                  ) : (
+                    <ul className="profile-connections-list">
+                      {connections.map((c) => {
+                        const isOpen = expandedConnectionId === c.id;
+                        const cInitial = (c.nickname || '?').charAt(0).toUpperCase();
+                        return (
+                          <li key={c.id} className="profile-connections-item">
+                            <button
+                              className="profile-connections-row"
+                              onClick={() => setExpandedConnectionId(isOpen ? '' : c.id)}
+                              aria-expanded={isOpen}
+                            >
+                              <span className="profile-notif-avatar">
+                                {c.avatar_url ? (
+                                  <img src={c.avatar_url} alt="" className="profile-connections-avatar-img" />
+                                ) : (
+                                  cInitial
+                                )}
+                              </span>
+                              <span className="profile-notif-text">
+                                <span className="profile-notif-msg">{c.nickname || 'Unnamed user'}</span>
+                                <span className="profile-notif-time">
+                                  {c.friend_code || 'Code hidden'}
+                                </span>
+                              </span>
+                              <ChevronIcon open={isOpen} />
+                            </button>
+
+                            {isOpen && (
+                              <div className="profile-connections-expanded">
+                                <div className="profile-connections-expanded-row">
+                                  <span className="profile-row-label">Code ID</span>
+                                  <span className="profile-row-value">
+                                    {c.friend_code || 'Hidden by user'}
+                                  </span>
+                                </div>
+                                <div className="profile-connections-expanded-row">
+                                  <span className="profile-row-label">Bio</span>
+                                  <span className="profile-row-value">
+                                    {c.bio || 'No bio yet.'}
+                                  </span>
+                                </div>
+                              </div>
+                            )}
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  )}
                 </div>
+              )}
+            </div>
 
-                <div className="setting-toggle-row">
-                  <span className="setting-toggle-icon"><CodeIcon /></span>
-                  <div className="setting-toggle-text">
-                    <span className="setting-toggle-title">Don't public your profile code ID</span>
-                    <span className="setting-toggle-desc">Hide your code ID from other users.</span>
-                  </div>
-                  <label className="toggle-switch">
-                    <input
-                      type="checkbox"
-                      checked={hideCode}
-                      onChange={() => handleToggleSetting('hide_code', hideCode)}
-                    />
-                    <span className="slider"></span>
-                  </label>
+            <form className="profile-search" onSubmit={handleSearch}>
+              <SearchIcon />
+              <input
+                type="text"
+                value={searchCode}
+                onChange={(e) => setSearchCode(e.target.value)}
+                placeholder="Search Code ID"
+                aria-label="Search by Code ID"
+                disabled={searching}
+              />
+            </form>
+
+            <div className="profile-connect-wrap" ref={searchRef}>
+              <button
+                className="profile-connect-btn"
+                onClick={handleConnect}
+                disabled={connectBusy}
+              >
+                <LinkIcon />
+                {connectBusy ? 'Sending...' : 'Connect'}
+              </button>
+
+              {(searchResult || searchError || connectNotice) && (
+                <div className="profile-search-popover">
+                  {searching && <span className="profile-id-status">Searching...</span>}
+                  {searchResult && (
+                    <span className="profile-search-found">
+                      Found <strong>{searchResult.nickname || 'user'}</strong> — click Connect to send a request.
+                    </span>
+                  )}
+                  {searchError && <span className="profile-error">{searchError}</span>}
+                  {connectNotice && <span className="profile-notice">{connectNotice}</span>}
                 </div>
+              )}
+            </div>
 
-                <h4 className="settings-subtitle">Account actions</h4>
+            <div className="profile-notif-trigger" ref={notifRef}>
+              <button
+                className="profile-notif-btn"
+                onClick={() => setNotifOpen((v) => !v)}
+                aria-label="Notifications"
+                aria-expanded={notifOpen}
+              >
+                <BellIcon />
+                {unreadCount > 0 && <span className="profile-notif-badge">{unreadCount}</span>}
+              </button>
 
-                <button className="account-action-row" onClick={handleLeave}>
-                  <span className="setting-toggle-icon"><LogOutIcon /></span>
-                  <div className="setting-toggle-text">
-                    <span className="setting-toggle-title">Log out</span>
-                    <span className="setting-toggle-desc">Sign out from your account.</span>
+              {notifOpen && (
+                <div className="profile-notif-dropdown">
+                  <div className="profile-notif-header">
+                    <span className="profile-notif-title">
+                      <BellIcon /> Notifications
+                      {unreadCount > 0 && <span className="profile-notif-count">{unreadCount}</span>}
+                    </span>
+                    <button className="profile-notif-close" onClick={() => setNotifOpen(false)} aria-label="Close">
+                      <XIcon />
+                    </button>
                   </div>
-                  <ChevronRightIcon />
-                </button>
 
-                <button
-                  className="account-action-row danger"
-                  onClick={() => {
-                    setDeleteError('');
-                    setShowDeleteConfirm(true);
-                    setSettingsOpen(false);
-                  }}
-                >
-                  <span className="setting-toggle-icon"><TrashIcon /></span>
-                  <div className="setting-toggle-text">
-                    <span className="setting-toggle-title">Delete account</span>
-                    <span className="setting-toggle-desc">Permanently delete your account and data.</span>
+                  {notifications.length === 0 ? (
+                    <p className="profile-hint">No notifications yet.</p>
+                  ) : (
+                    <ul className="profile-notif-list">
+                      {notifications.map((n) => (
+                        <li key={n.id} className="profile-notif-row">
+                          <span className="profile-notif-avatar">
+                            {(n.message || '?').charAt(0).toUpperCase()}
+                          </span>
+                          <span className="profile-notif-text">
+                            <span className="profile-notif-msg">{n.message}</span>
+                            <span className="profile-notif-time">{timeAgo(n.created_at)}</span>
+                          </span>
+
+                          {n.type === 'connection_request' ? (
+                            <span className="profile-notif-actions">
+                              <button
+                                className="profile-notif-action accept"
+                                onClick={() => handleNotifRespond(n, true)}
+                                disabled={notifBusyId === n.id}
+                                aria-label="Accept"
+                              >
+                                <CheckIcon />
+                              </button>
+                              <button
+                                className="profile-notif-action decline"
+                                onClick={() => handleNotifRespond(n, false)}
+                                disabled={notifBusyId === n.id}
+                                aria-label="Decline"
+                              >
+                                <XIcon />
+                              </button>
+                            </span>
+                          ) : (
+                            <button
+                              className="profile-notif-action plain"
+                              onClick={() => handleNotifDismiss(n)}
+                              disabled={notifBusyId === n.id}
+                              aria-label="Dismiss"
+                            >
+                              {n.type === 'connection_accepted' ? <UserIcon /> : <ChatIcon />}
+                            </button>
+                          )}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              )}
+            </div>
+
+            <div className="profile-settings-trigger" ref={settingsRef}>
+              <button
+                className="profile-settings-btn"
+                onClick={() => setSettingsOpen((v) => !v)}
+                aria-label="Settings"
+                aria-expanded={settingsOpen}
+              >
+                <GearIcon />
+              </button>
+
+              {settingsOpen && (
+                <div className="profile-settings-dropdown">
+                  <h3 className="profile-card-title">
+                    <span className="profile-card-title-icon"><GearIcon /></span>
+                    Settings
+                  </h3>
+
+                  {settingsError && <p className="profile-error" role="alert">{settingsError}</p>}
+
+                  <div className="setting-toggle-row">
+                    <span className="setting-toggle-icon"><ShieldIcon /></span>
+                    <div className="setting-toggle-text">
+                      <span className="setting-toggle-title">Make profile private</span>
+                      <span className="setting-toggle-desc">Only you can see your profile, details and code ID.</span>
+                    </div>
+                    <label className="toggle-switch">
+                      <input
+                        type="checkbox"
+                        checked={profilePrivate}
+                        onChange={() => handleToggleSetting('profile_private', profilePrivate)}
+                      />
+                      <span className="slider"></span>
+                    </label>
                   </div>
-                  <ChevronRightIcon />
-                </button>
-              </div>
-            )}
+
+                  <div className="setting-toggle-row">
+                    <span className="setting-toggle-icon"><CodeIcon /></span>
+                    <div className="setting-toggle-text">
+                      <span className="setting-toggle-title">Don't public your profile code ID</span>
+                      <span className="setting-toggle-desc">Hide your code ID from other users.</span>
+                    </div>
+                    <label className="toggle-switch">
+                      <input
+                        type="checkbox"
+                        checked={hideCode}
+                        onChange={() => handleToggleSetting('hide_code', hideCode)}
+                      />
+                      <span className="slider"></span>
+                    </label>
+                  </div>
+
+                  <h4 className="settings-subtitle">Account actions</h4>
+
+                  <button className="account-action-row" onClick={handleLeave}>
+                    <span className="setting-toggle-icon"><LogOutIcon /></span>
+                    <div className="setting-toggle-text">
+                      <span className="setting-toggle-title">Log out</span>
+                      <span className="setting-toggle-desc">Sign out from your account.</span>
+                    </div>
+                    <ChevronRightIcon />
+                  </button>
+
+                  <button
+                    className="account-action-row danger"
+                    onClick={() => {
+                      setDeleteError('');
+                      setShowDeleteConfirm(true);
+                      setSettingsOpen(false);
+                    }}
+                  >
+                    <span className="setting-toggle-icon"><TrashIcon /></span>
+                    <div className="setting-toggle-text">
+                      <span className="setting-toggle-title">Delete account</span>
+                      <span className="setting-toggle-desc">Permanently delete your account and data.</span>
+                    </div>
+                    <ChevronRightIcon />
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         )}
       </header>
