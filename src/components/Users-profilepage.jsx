@@ -803,19 +803,34 @@ export default function UsersProfilePage() {
   const handleNotifRespond = async (notif, accept) => {
     setNotifBusyId(notif.id);
     try {
-      const connectionId = notif.data?.connection_id;
-      if (connectionId) {
+      // Gamitin ang actor_id (user id ng nag-request) sa halip na ang
+      // connection row id lang, dahil mas matibay ito kahit nagbago/
+      // na-merge na ang row sa likod.
+      const otherUserId = notif.actor_id || notif.data?.connection_id;
+      if (otherUserId) {
         const { error: respondErr } = await supabase.rpc('respond_connection_request', {
-          p_connection_id: connectionId,
+          p_connection_id: otherUserId,
           p_accept: accept
         });
         if (respondErr) throw respondErr;
       }
       await supabase.from('notifications').update({ is_read: true }).eq('id', notif.id);
-      setNotifications((prev) => prev.filter((n) => n.id !== notif.id));
+
+      // Ipakita muna ang resulta (Accepted/Declined) bago alisin sa listahan
+      setNotifications((prev) =>
+        prev.map((n) =>
+          n.id === notif.id ? { ...n, _justResponded: accept ? 'accepted' : 'declined' } : n
+        )
+      );
       if (accept) loadConnections();
-    } catch {
-      /* tahimik na mag-fail */
+
+      setTimeout(() => {
+        setNotifications((prev) => prev.filter((n) => n.id !== notif.id));
+      }, 1400);
+    } catch (err) {
+      setNotifications((prev) =>
+        prev.map((n) => (n.id === notif.id ? { ...n, _justResponded: 'error' } : n))
+      );
     } finally {
       setNotifBusyId('');
     }
@@ -1022,24 +1037,36 @@ export default function UsersProfilePage() {
                           </span>
 
                           {n.type === 'connection_request' ? (
-                            <span className="profile-notif-actions">
-                              <button
-                                className="profile-notif-action accept"
-                                onClick={() => handleNotifRespond(n, true)}
-                                disabled={notifBusyId === n.id}
-                                aria-label="Accept"
-                              >
-                                <CheckIcon />
-                              </button>
-                              <button
-                                className="profile-notif-action decline"
-                                onClick={() => handleNotifRespond(n, false)}
-                                disabled={notifBusyId === n.id}
-                                aria-label="Decline"
-                              >
-                                <XIcon />
-                              </button>
-                            </span>
+                            n._justResponded === 'accepted' ? (
+                              <span className="profile-notif-result accepted">
+                                <CheckIcon /> Accepted
+                              </span>
+                            ) : n._justResponded === 'declined' ? (
+                              <span className="profile-notif-result declined">
+                                <XIcon /> Declined
+                              </span>
+                            ) : n._justResponded === 'error' ? (
+                              <span className="profile-notif-result error">Could not update</span>
+                            ) : (
+                              <span className="profile-notif-actions">
+                                <button
+                                  className="profile-notif-action accept"
+                                  onClick={() => handleNotifRespond(n, true)}
+                                  disabled={notifBusyId === n.id}
+                                  aria-label="Accept"
+                                >
+                                  <CheckIcon />
+                                </button>
+                                <button
+                                  className="profile-notif-action decline"
+                                  onClick={() => handleNotifRespond(n, false)}
+                                  disabled={notifBusyId === n.id}
+                                  aria-label="Decline"
+                                >
+                                  <XIcon />
+                                </button>
+                              </span>
+                            )
                           ) : (
                             <button
                               className="profile-notif-action plain"
