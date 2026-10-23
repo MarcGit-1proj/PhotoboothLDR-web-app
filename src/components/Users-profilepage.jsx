@@ -967,7 +967,7 @@ export default function UsersProfilePage() {
                 disabled={connectBusy}
               >
                 <LinkIcon />
-                {connectBusy ? 'Sending...' : 'Connect'}
+                <span>{connectBusy ? 'Sending...' : 'Connect'}</span>
               </button>
 
               {(searchResult || searchError || connectNotice) && (
