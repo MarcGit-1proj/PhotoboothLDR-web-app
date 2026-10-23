@@ -634,6 +634,51 @@
   font-size: 0.9rem;
 }
 
+.contact-edit-row {
+  align-items: center;
+}
+
+.contact-edit-fields {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+
+.contact-platform-select {
+  flex: 0 0 auto;
+  width: auto;
+  min-width: 110px;
+  text-align: left;
+  color-scheme: dark;
+}
+
+.contact-platform-select option {
+  background: #18181b;
+  color: #f4f4f5;
+}
+
+/* Hover/selected highlight sa options (gumagana sa Firefox; limitado sa
+   Chrome/Edge dahil OS-rendered ang listahan ng native <select> doon) */
+.contact-platform-select option:hover,
+.contact-platform-select option:focus,
+.contact-platform-select option:checked {
+  background: #ec4899;
+  color: #ffffff;
+}
+
+.contact-edit-fields .profile-inline-input:not(.contact-platform-select) {
+  flex: 1 1 140px;
+  min-width: 140px;
+}
+
+@media (max-width: 640px) {
+  .contact-edit-fields {
+    justify-content: flex-start;
+    width: 100%;
+  }
+}
+
 .profile-link-btn {
   background: none;
   border: none;
@@ -1187,6 +1232,15 @@ body.light-mode .profile-input {
   border-color: rgba(0, 0, 0, 0.12);
   color: #18181b;
   color-scheme: light;
+}
+
+body.light-mode .contact-platform-select {
+  color-scheme: light;
+}
+
+body.light-mode .contact-platform-select option {
+  background: #ffffff;
+  color: #18181b;
 }
 
 body.light-mode .profile-btn.secondary {

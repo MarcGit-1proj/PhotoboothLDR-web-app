@@ -10,7 +10,13 @@ const MAX_UPLOAD_BYTES = 8 * 1024 * 1024;
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 const BIO_MAX = 160;
 const NICK_MAX = 20;
-const FACEBOOK_MAX = 100;
+const CONTACT_MAX = 100;
+const CONTACT_PLATFORMS = [
+  { value: 'telegram', label: 'Telegram' },
+  { value: 'whatsapp', label: 'WhatsApp' },
+  { value: 'facebook', label: 'Facebook' },
+  { value: 'instagram', label: 'Instagram' }
+];
 
 /* ---------- Helpers ---------- */
 const parseDateInput = (str) => {
@@ -235,9 +241,10 @@ export default function UsersProfilePage() {
   // Our details: collapsible (sarado muna by default)
   const [detailsOpen, setDetailsOpen] = useState(false);
 
-  // Account card: editable (Facebook / other contact)
+  // Account card: editable (Telegram / WhatsApp / Facebook / Instagram)
   const [editingAccount, setEditingAccount] = useState(false);
-  const [facebookInput, setFacebookInput] = useState('');
+  const [contactPlatformInput, setContactPlatformInput] = useState('telegram');
+  const [contactUsernameInput, setContactUsernameInput] = useState('');
   const [accountSaving, setAccountSaving] = useState(false);
   const [accountError, setAccountError] = useState('');
   const [accountNotice, setAccountNotice] = useState('');
@@ -297,7 +304,10 @@ export default function UsersProfilePage() {
   const meta = user?.user_metadata || {};
   const nickname = meta.nickname || meta.display_name || '';
   const bio = meta.bio || '';
-  const facebook = meta.facebook || '';
+  const contactPlatform = meta.contact_platform || '';
+  const contactUsername = meta.contact_username || '';
+  const contactPlatformLabel =
+    CONTACT_PLATFORMS.find((p) => p.value === contactPlatform)?.label || '';
   const profilePrivate = !!meta.profile_private;
   const hideCode = !!meta.hide_code;
   const avatarUrl = meta.avatar_url || '';
@@ -400,9 +410,10 @@ export default function UsersProfilePage() {
     }
   };
 
-  /* ----- Account card: Facebook / other contact ----- */
+  /* ----- Account card: contact platform (Telegram/WhatsApp/Facebook/Instagram) ----- */
   const startEditAccount = () => {
-    setFacebookInput(facebook);
+    setContactPlatformInput(contactPlatform || 'telegram');
+    setContactUsernameInput(contactUsername);
     setAccountError('');
     setAccountNotice('');
     setEditingAccount(true);
@@ -418,7 +429,10 @@ export default function UsersProfilePage() {
     setAccountError('');
     try {
       const { data, error: updateError } = await supabase.auth.updateUser({
-        data: { facebook: facebookInput.trim() }
+        data: {
+          contact_platform: contactUsernameInput.trim() ? contactPlatformInput : '',
+          contact_username: contactUsernameInput.trim()
+        }
       });
       if (updateError) throw updateError;
       setUser(data.user);
@@ -856,24 +870,39 @@ export default function UsersProfilePage() {
 
                 <InfoRow label="Email">{email || 'Not available'}</InfoRow>
 
-                <div className="profile-row">
-                  <span className="profile-row-label">Facebook</span>
-                  <span className="profile-row-value">
-                    {editingAccount ? (
+                {editingAccount ? (
+                  <div className="profile-row contact-edit-row">
+                    <span className="profile-row-label">Contact</span>
+                    <span className="profile-row-value contact-edit-fields">
+                      <select
+                        className="profile-input profile-inline-input contact-platform-select"
+                        value={contactPlatformInput}
+                        aria-label="Contact platform"
+                        onChange={(e) => setContactPlatformInput(e.target.value)}
+                      >
+                        {CONTACT_PLATFORMS.map((p) => (
+                          <option key={p.value} value={p.value}>{p.label}</option>
+                        ))}
+                      </select>
                       <input
                         className="profile-input profile-inline-input"
                         type="text"
-                        maxLength={FACEBOOK_MAX}
-                        value={facebookInput}
-                        placeholder="Facebook profile link or username"
-                        aria-label="Facebook"
-                        onChange={(e) => setFacebookInput(e.target.value)}
+                        maxLength={CONTACT_MAX}
+                        value={contactUsernameInput}
+                        placeholder="Your username"
+                        aria-label="Contact username"
+                        onChange={(e) => setContactUsernameInput(e.target.value)}
                       />
-                    ) : (
-                      facebook || 'Not set'
-                    )}
-                  </span>
-                </div>
+                    </span>
+                  </div>
+                ) : (
+                  <div className="profile-row">
+                    <span className="profile-row-label">Contact</span>
+                    <span className="profile-row-value">
+                      {contactUsername ? `${contactPlatformLabel}: ${contactUsername}` : 'Not set'}
+                    </span>
+                  </div>
+                )}
 
                 {accountError && <p className="profile-error" role="alert">{accountError}</p>}
                 {accountNotice && <p className="profile-notice" role="status">{accountNotice}</p>}
