@@ -47,6 +47,12 @@
   gap: 10px;
 }
 
+.profile-search-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .profile-search {
   display: flex;
   align-items: center;
@@ -1466,46 +1472,72 @@
     row-gap: 12px;
   }
 
+  /* Dito na gagawing "anchor" ang buong right side ng header, para
+     ma-center nang tama ang mga dropdown sa ibaba, kahit saang icon
+     galing (people/notif/settings), hindi lang sa maliit na button. */
   .profile-header-right {
+    position: relative;
     width: 100%;
     margin-left: 0;
     flex-wrap: wrap;
     gap: 8px;
   }
 
-  .profile-search {
+  /* Search + Connect: magkatabi, isang buong row */
+  .profile-search-group {
     order: 1;
     flex: 1 1 100%;
     width: 100%;
+    gap: 8px;
+  }
+
+  .profile-search {
+    flex: 1 1 auto;
+    min-width: 0;
   }
 
   .profile-search input {
     width: 100%;
+    min-width: 0;
   }
 
+  .profile-connect-wrap {
+    flex-shrink: 0;
+  }
+
+  /* People / Notifications / Settings: hiwalay na row sa ibaba */
   .profile-connections-trigger,
-  .profile-connect-wrap,
   .profile-notif-trigger,
   .profile-settings-trigger {
     order: 2;
+  }
+
+  /* Ang mga trigger wrappers ay hindi na gumagawa ng sarili nilang
+     "positioning context" dito, para ang dropdown nila ay lumabas
+     nang naka-center sa BUONG header-right (hindi lang sa maliit na
+     button), kaya hindi na ito naputol o natabunan. */
+  .profile-connections-trigger,
+  .profile-notif-trigger,
+  .profile-settings-trigger,
+  .profile-connect-wrap {
+    position: static;
   }
 
   .profile-connections-dropdown,
   .profile-notif-dropdown,
   .profile-settings-dropdown,
   .profile-search-popover {
+    position: absolute;
+    top: calc(100% + 10px);
     left: 50%;
     right: auto;
     transform: translateX(-50%);
     width: min(92vw, 340px);
+    max-height: min(70vh, 420px);
   }
 }
 
 @media (max-width: 420px) {
-  .profile-header-right {
-    justify-content: space-between;
-  }
-
   .profile-connect-btn {
     padding: 0 12px;
   }

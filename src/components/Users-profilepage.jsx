@@ -431,13 +431,7 @@ export default function UsersProfilePage() {
   const loadNotifications = useCallback(async () => {
     if (!user) return;
     try {
-      const { data, error: notifErr } = await supabase
-        .from('notifications')
-        .select('*')
-        .eq('user_id', user.id)
-        .eq('is_read', false)
-        .order('created_at', { ascending: false })
-        .limit(20);
+      const { data, error: notifErr } = await supabase.rpc('list_my_notifications');
       if (notifErr) throw notifErr;
       setNotifications(data || []);
     } catch {
@@ -476,11 +470,11 @@ export default function UsersProfilePage() {
       .on(
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'notifications', filter: `user_id=eq.${user.id}` },
-        (payload) => setNotifications((prev) => [payload.new, ...prev])
+        () => loadNotifications()
       )
       .subscribe();
     return () => supabase.removeChannel(channel);
-  }, [isAccount, user]);
+  }, [isAccount, user, loadNotifications]);
 
   const unreadCount = notifications.filter((n) => !n.is_read).length;
 
@@ -964,40 +958,42 @@ export default function UsersProfilePage() {
               )}
             </div>
 
-            <form className="profile-search" onSubmit={handleSearch}>
-              <SearchIcon />
-              <input
-                type="text"
-                value={searchCode}
-                onChange={(e) => setSearchCode(e.target.value)}
-                placeholder="Search Code ID"
-                aria-label="Search by Code ID"
-                disabled={searching}
-              />
-            </form>
+            <div className="profile-search-group">
+              <form className="profile-search" onSubmit={handleSearch}>
+                <SearchIcon />
+                <input
+                  type="text"
+                  value={searchCode}
+                  onChange={(e) => setSearchCode(e.target.value)}
+                  placeholder="Search Code ID"
+                  aria-label="Search by Code ID"
+                  disabled={searching}
+                />
+              </form>
 
-            <div className="profile-connect-wrap" ref={searchRef}>
-              <button
-                className="profile-connect-btn"
-                onClick={handleConnect}
-                disabled={connectBusy}
-              >
-                <LinkIcon />
-                <span>{connectBusy ? 'Sending...' : 'Connect'}</span>
-              </button>
+              <div className="profile-connect-wrap" ref={searchRef}>
+                <button
+                  className="profile-connect-btn"
+                  onClick={handleConnect}
+                  disabled={connectBusy}
+                >
+                  <LinkIcon />
+                  <span>{connectBusy ? 'Sending...' : 'Connect'}</span>
+                </button>
 
-              {(searchResult || searchError || connectNotice) && (
-                <div className="profile-search-popover">
-                  {searching && <span className="profile-id-status">Searching...</span>}
-                  {searchResult && (
-                    <span className="profile-search-found">
-                      Found <strong>{searchResult.nickname || 'user'}</strong> — click Connect to send a request.
-                    </span>
-                  )}
-                  {searchError && <span className="profile-error">{searchError}</span>}
-                  {connectNotice && <span className="profile-notice">{connectNotice}</span>}
-                </div>
-              )}
+                {(searchResult || searchError || connectNotice) && (
+                  <div className="profile-search-popover">
+                    {searching && <span className="profile-id-status">Searching...</span>}
+                    {searchResult && (
+                      <span className="profile-search-found">
+                        Found <strong>{searchResult.nickname || 'user'}</strong> — click Connect to send a request.
+                      </span>
+                    )}
+                    {searchError && <span className="profile-error">{searchError}</span>}
+                    {connectNotice && <span className="profile-notice">{connectNotice}</span>}
+                  </div>
+                )}
+              </div>
             </div>
 
             <div className="profile-notif-trigger" ref={notifRef}>
@@ -1030,7 +1026,11 @@ export default function UsersProfilePage() {
                       {notifications.map((n) => (
                         <li key={n.id} className="profile-notif-row">
                           <span className="profile-notif-avatar">
-                            {(n.message || '?').charAt(0).toUpperCase()}
+                            {n.actor_avatar_url ? (
+                              <img src={n.actor_avatar_url} alt="" className="profile-connections-avatar-img" />
+                            ) : (
+                              (n.actor_nickname || n.message || '?').charAt(0).toUpperCase()
+                            )}
                           </span>
                           <span className="profile-notif-text">
                             <span className="profile-notif-msg">{n.message}</span>
