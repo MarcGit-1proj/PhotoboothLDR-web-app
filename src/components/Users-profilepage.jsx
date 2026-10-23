@@ -435,6 +435,7 @@ export default function UsersProfilePage() {
         .from('notifications')
         .select('*')
         .eq('user_id', user.id)
+        .eq('is_read', false)
         .order('created_at', { ascending: false })
         .limit(20);
       if (notifErr) throw notifErr;
