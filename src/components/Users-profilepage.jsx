@@ -467,17 +467,20 @@ export default function UsersProfilePage() {
 
   // Alisin ang isang connection (parang "unfriend"), tatanggalin din sa listahan
   const handleDisconnect = async (c) => {
-    setConnectionActionBusyId(c.id);
+    // Optimistic update: agad na alisin sa listahan at isara ang mga
+    // modal/expanded view, hindi na hinihintay ang response ng server
+    // (mas mabilis ang dating sa user). Kung mag-fail ang request,
+    // ibabalik lang natin siya sa listahan.
+    setConnections((prev) => prev.filter((conn) => conn.id !== c.id));
+    setExpandedConnectionId('');
+    if (stalkTarget && stalkTarget.id === c.id) setStalkTarget(null);
+
     try {
       const { error: rpcError } = await supabase.rpc('remove_connection', { p_other_user_id: c.id });
       if (rpcError) throw rpcError;
-      setConnections((prev) => prev.filter((conn) => conn.id !== c.id));
-      setExpandedConnectionId('');
-      if (stalkTarget && stalkTarget.id === c.id) setStalkTarget(null);
     } catch {
-      /* tahimik na mag-fail, hindi kritikal sa page */
-    } finally {
-      setConnectionActionBusyId('');
+      // Ibalik sa listahan kung hindi talaga natuloy ang pag-disconnect
+      setConnections((prev) => (prev.some((conn) => conn.id === c.id) ? prev : [...prev, c]));
     }
   };
 
