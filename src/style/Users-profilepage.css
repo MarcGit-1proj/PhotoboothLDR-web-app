@@ -188,6 +188,144 @@
   text-align: right;
 }
 
+/* Disconnect / Stalk buttons sa ilalim ng expanded connection row */
+.profile-connections-expanded-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.profile-conn-action-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  font-family: inherit;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: background 0.2s ease, transform 0.15s ease;
+}
+
+.profile-conn-action-btn .icon-svg {
+  width: 14px;
+  height: 14px;
+}
+
+.profile-conn-action-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.profile-conn-action-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.profile-conn-action-btn.stalk {
+  background: rgba(236, 72, 153, 0.1);
+  border-color: rgba(236, 72, 153, 0.4);
+  color: #f472b6;
+}
+
+.profile-conn-action-btn.stalk:hover:not(:disabled) {
+  background: rgba(236, 72, 153, 0.2);
+}
+
+.profile-conn-action-btn.disconnect {
+  background: rgba(255, 77, 77, 0.1);
+  border-color: rgba(255, 77, 77, 0.35);
+  color: #ff5c5c;
+}
+
+.profile-conn-action-btn.disconnect:hover:not(:disabled) {
+  background: rgba(255, 77, 77, 0.2);
+}
+
+/* "Stalk" modal: mini profile view ng isang connection */
+.profile-stalk-modal {
+  position: relative;
+  background: #18181b;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  padding: 36px 28px 28px;
+  width: 100%;
+  max-width: 380px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+}
+
+.profile-stalk-close {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+}
+
+.profile-stalk-avatar {
+  width: 88px;
+  height: 88px;
+  border-radius: 50%;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  font-weight: 800;
+  color: #ffffff;
+  background: linear-gradient(135deg, #c084fc, #ec4899, #f43f5e);
+  border: 3px solid rgba(255, 255, 255, 0.4);
+  box-shadow: 0 0 22px rgba(236, 72, 153, 0.45);
+  margin-bottom: 14px;
+  flex-shrink: 0;
+}
+
+.profile-stalk-name {
+  margin: 0 0 12px 0;
+  font-size: 1.3rem;
+  font-weight: 800;
+  color: #ffffff;
+}
+
+.profile-stalk-private-note {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 4px 0 20px 0;
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.05);
+  color: #a1a1aa;
+  font-size: 0.85rem;
+  font-style: italic;
+}
+
+.profile-stalk-private-note .icon-svg {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  color: #f472b6;
+}
+
+.profile-stalk-details {
+  width: 100%;
+  margin-bottom: 18px;
+}
+
+.profile-stalk-details .profile-row:last-of-type {
+  border-bottom: none;
+}
+
+.profile-stalk-disconnect {
+  margin-top: 4px;
+}
+
 .profile-connect-wrap { position: relative; }
 
 .profile-connect-btn {
@@ -1498,6 +1636,7 @@
     flex-shrink: 0;
   }
 
+  /* People / Settings: magkatabi sa kaliwa; Notifications: itutulak sa pinaka-kanan */
   .profile-connections-trigger {
     order: 2;
   }
@@ -1776,6 +1915,32 @@ body.light-mode .profile-modal-content h2 {
 }
 
 body.light-mode .profile-modal-text {
+  color: #52525b;
+}
+
+body.light-mode .profile-conn-action-btn.stalk {
+  background: rgba(236, 72, 153, 0.08);
+  border-color: rgba(236, 72, 153, 0.3);
+  color: #db2777;
+}
+
+body.light-mode .profile-conn-action-btn.disconnect {
+  background: rgba(255, 77, 77, 0.08);
+  border-color: rgba(255, 77, 77, 0.3);
+  color: #e03e3e;
+}
+
+body.light-mode .profile-stalk-modal {
+  background: #ffffff;
+  border-color: rgba(0, 0, 0, 0.08);
+}
+
+body.light-mode .profile-stalk-name {
+  color: #18181b;
+}
+
+body.light-mode .profile-stalk-private-note {
+  background: rgba(0, 0, 0, 0.04);
   color: #52525b;
 }
 

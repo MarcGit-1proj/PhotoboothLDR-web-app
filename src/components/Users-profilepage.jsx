@@ -322,6 +322,10 @@ export default function UsersProfilePage() {
   const [connectionsOpen, setConnectionsOpen] = useState(false);
   const [connectionsLoading, setConnectionsLoading] = useState(false);
   const [expandedConnectionId, setExpandedConnectionId] = useState('');
+  const [connectionActionBusyId, setConnectionActionBusyId] = useState('');
+
+  // "Stalk" / Explore: minimalistang profile view ng isang connection
+  const [stalkTarget, setStalkTarget] = useState(null);
 
   // Ilapat ang saved theme (kung direkta ang bukas sa /profile)
   useEffect(() => {
@@ -399,7 +403,6 @@ export default function UsersProfilePage() {
   const contactPlatformLabel =
     CONTACT_PLATFORMS.find((p) => p.value === contactPlatform)?.label || '';
   const profilePrivate = !!meta.profile_private;
-  const hideCode = !!meta.hide_code;
   const avatarUrl = meta.avatar_url || '';
   const showAvatarImage = !!avatarUrl && avatarUrl !== brokenAvatar;
   const email = user?.email || '';
@@ -461,6 +464,22 @@ export default function UsersProfilePage() {
   useEffect(() => {
     if (isAccount) loadConnections();
   }, [isAccount, loadConnections]);
+
+  // Alisin ang isang connection (parang "unfriend"), tatanggalin din sa listahan
+  const handleDisconnect = async (c) => {
+    setConnectionActionBusyId(c.id);
+    try {
+      const { error: rpcError } = await supabase.rpc('remove_connection', { p_other_user_id: c.id });
+      if (rpcError) throw rpcError;
+      setConnections((prev) => prev.filter((conn) => conn.id !== c.id));
+      setExpandedConnectionId('');
+      if (stalkTarget && stalkTarget.id === c.id) setStalkTarget(null);
+    } catch {
+      /* tahimik na mag-fail, hindi kritikal sa page */
+    } finally {
+      setConnectionActionBusyId('');
+    }
+  };
 
   // Live updates gamit ang Supabase Realtime (kapag may bagong notification)
   useEffect(() => {
@@ -948,6 +967,24 @@ export default function UsersProfilePage() {
                                     {c.bio || 'No bio yet.'}
                                   </span>
                                 </div>
+
+                                <div className="profile-connections-expanded-actions">
+                                  <button
+                                    className="profile-conn-action-btn stalk"
+                                    onClick={() => setStalkTarget(c)}
+                                  >
+                                    <SearchIcon />
+                                    Stalk
+                                  </button>
+                                  <button
+                                    className="profile-conn-action-btn disconnect"
+                                    onClick={() => handleDisconnect(c)}
+                                    disabled={connectionActionBusyId === c.id}
+                                  >
+                                    <XIcon />
+                                    {connectionActionBusyId === c.id ? 'Removing...' : 'Disconnect'}
+                                  </button>
+                                </div>
                               </div>
                             )}
                           </li>
@@ -1121,22 +1158,6 @@ export default function UsersProfilePage() {
                         type="checkbox"
                         checked={profilePrivate}
                         onChange={() => handleToggleSetting('profile_private', profilePrivate)}
-                      />
-                      <span className="slider"></span>
-                    </label>
-                  </div>
-
-                  <div className="setting-toggle-row">
-                    <span className="setting-toggle-icon"><CodeIcon /></span>
-                    <div className="setting-toggle-text">
-                      <span className="setting-toggle-title">Don't public your profile code ID</span>
-                      <span className="setting-toggle-desc">Hide your code ID from other users.</span>
-                    </div>
-                    <label className="toggle-switch">
-                      <input
-                        type="checkbox"
-                        checked={hideCode}
-                        onChange={() => handleToggleSetting('hide_code', hideCode)}
                       />
                       <span className="slider"></span>
                     </label>
@@ -1503,6 +1524,64 @@ export default function UsersProfilePage() {
                 {deleteBusy ? 'Please wait...' : 'Yes, delete'}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Stalk / Explore: tingnan ang profile ng isang connection */}
+      {stalkTarget && (
+        <div className="profile-modal-overlay" onClick={() => setStalkTarget(null)}>
+          <div className="profile-stalk-modal" onClick={(e) => e.stopPropagation()}>
+            <button
+              className="profile-notif-close profile-stalk-close"
+              onClick={() => setStalkTarget(null)}
+              aria-label="Close"
+            >
+              <XIcon />
+            </button>
+
+            <div className="profile-stalk-avatar">
+              {stalkTarget.avatar_url ? (
+                <img src={stalkTarget.avatar_url} alt="" className="profile-connections-avatar-img" />
+              ) : (
+                <span aria-hidden="true">{(stalkTarget.nickname || '?').charAt(0).toUpperCase()}</span>
+              )}
+            </div>
+
+            <h3 className="profile-stalk-name">{stalkTarget.nickname || 'Unnamed user'}</h3>
+
+            {stalkTarget.profile_private ? (
+              <p className="profile-stalk-private-note">
+                <ShieldIcon /> This user's account is private.
+              </p>
+            ) : (
+              <div className="profile-stalk-details">
+                <div className="profile-row">
+                  <span className="profile-row-label">Code ID</span>
+                  <span className="profile-row-value">{stalkTarget.friend_code || 'Hidden by user'}</span>
+                </div>
+                <div className="profile-row">
+                  <span className="profile-row-label">Bio</span>
+                  <span className="profile-row-value">{stalkTarget.bio || 'No bio yet.'}</span>
+                </div>
+                <div className="profile-row">
+                  <span className="profile-row-label">Contact</span>
+                  <span className="profile-row-value">
+                    {stalkTarget.contact_username
+                      ? `${CONTACT_PLATFORMS.find((p) => p.value === stalkTarget.contact_platform)?.label || stalkTarget.contact_platform}: ${stalkTarget.contact_username}`
+                      : 'Not set'}
+                  </span>
+                </div>
+              </div>
+            )}
+
+            <button
+              className="profile-btn danger full profile-stalk-disconnect"
+              onClick={() => handleDisconnect(stalkTarget)}
+              disabled={connectionActionBusyId === stalkTarget.id}
+            >
+              {connectionActionBusyId === stalkTarget.id ? 'Removing...' : 'Disconnect'}
+            </button>
           </div>
         </div>
       )}
