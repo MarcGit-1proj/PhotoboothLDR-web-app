@@ -858,10 +858,11 @@ export default function UsersProfilePage() {
   return (
     <div className="main-page-wrapper profile-page">
       <header className="profile-header">
-        <button className="profile-back" onClick={() => navigate('/main')} aria-label="Back to home">
-          <BackIcon />
-        </button>
-        <h1 className="profile-title">User Profile</h1>
+        {!isAccount && (
+          <button className="profile-back" onClick={() => navigate('/main')} aria-label="Back to home">
+            <BackIcon />
+          </button>
+        )}
 
         {isAccount && (
           <div className="profile-header-right">
@@ -959,6 +960,10 @@ export default function UsersProfilePage() {
             </div>
 
             <div className="profile-search-group">
+              <button className="profile-back" onClick={() => navigate('/main')} aria-label="Back to home">
+                <BackIcon />
+              </button>
+
               <form className="profile-search" onSubmit={handleSearch}>
                 <SearchIcon />
                 <input

@@ -53,6 +53,10 @@
   gap: 8px;
 }
 
+.profile-search-group .profile-back {
+  flex-shrink: 0;
+}
+
 .profile-search {
   display: flex;
   align-items: center;
@@ -475,13 +479,6 @@
 .profile-back svg {
   width: 20px;
   height: 20px;
-}
-
-.profile-title {
-  margin: 0;
-  font-size: 1.6rem;
-  font-weight: 800;
-  letter-spacing: 0.3px;
 }
 
 .profile-main {
@@ -1431,10 +1428,6 @@
     padding: 16px;
   }
 
-  .profile-title {
-    font-size: 1.4rem;
-  }
-
   .profile-main {
     padding: 20px 16px 40px;
   }
@@ -1465,7 +1458,7 @@
   }
 }
 
-/* Mobile header: maayos na dalawang hanay (back+title, tapos search+icons) */
+/* Mobile header: maayos na dalawang hanay (back+search, tapos ibang icons) */
 @media (max-width: 760px) {
   .profile-header {
     flex-wrap: wrap;
@@ -1483,7 +1476,7 @@
     gap: 8px;
   }
 
-  /* Search + Connect: magkatabi, isang buong row */
+  /* Back + Search + Connect: magkatabi, isang buong row */
   .profile-search-group {
     order: 1;
     flex: 1 1 100%;
@@ -1505,11 +1498,17 @@
     flex-shrink: 0;
   }
 
-  /* People / Notifications / Settings: hiwalay na row sa ibaba */
-  .profile-connections-trigger,
-  .profile-notif-trigger,
-  .profile-settings-trigger {
+  .profile-connections-trigger {
     order: 2;
+  }
+
+  .profile-settings-trigger {
+    order: 3;
+  }
+
+  .profile-notif-trigger {
+    order: 4;
+    margin-left: auto;
   }
 
   /* Ang mga trigger wrappers ay hindi na gumagawa ng sarili nilang
