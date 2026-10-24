@@ -478,8 +478,11 @@ export default function UsersProfilePage() {
     try {
       const { error: rpcError } = await supabase.rpc('remove_connection', { p_other_user_id: c.id });
       if (rpcError) throw rpcError;
-    } catch {
-      // Ibalik sa listahan kung hindi talaga natuloy ang pag-disconnect
+    } catch (err) {
+      // Ipakita sa console ang totoong dahilan ng pag-fail (para madaling
+      // ma-debug), tapos ibalik sa listahan kung hindi talaga natuloy
+      // ang pag-disconnect.
+      console.error('remove_connection failed:', err);
       setConnections((prev) => (prev.some((conn) => conn.id === c.id) ? prev : [...prev, c]));
     }
   };
