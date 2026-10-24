@@ -15,12 +15,14 @@
     radial-gradient(circle at 20% 30%, rgba(225, 29, 72, 0.15) 0%, transparent 40%),
     radial-gradient(circle at 80% 70%, rgba(147, 51, 234, 0.1) 0%, transparent 40%);
   color: #e2e8f0;
-  height: 100vh;
+  min-height: 100vh;
   width: 100vw;
   display: flex;
   justify-content: center;
   align-items: center;
-  overflow: hidden;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 20px 0;
   transition: opacity 0.6s ease-in-out, transform 0.6s ease-in-out;
   opacity: 1;
   transform: scale(1);
@@ -294,4 +296,42 @@
 @keyframes fadeInModal {
   from { opacity: 0; transform: scale(0.95); }
   to { opacity: 1; transform: scale(1); }
+}
+
+/* Landscape / maliit na height na screens */
+@media (max-height: 500px) and (orientation: landscape) {
+  .frontpage-content {
+    padding: 20px 30px;
+  }
+
+  .frontpage-badge {
+    margin-bottom: 8px;
+    font-size: 0.8rem;
+    padding: 6px 14px;
+  }
+
+  .welcome-text {
+    margin-bottom: 2px;
+    font-size: 0.8rem;
+  }
+
+  .frontpage-title {
+    font-size: 1.6rem;
+    margin-bottom: 4px;
+  }
+
+  .quotes-box {
+    min-height: 50px;
+    padding: 8px 10px;
+    margin-bottom: 14px;
+  }
+
+  .quote-text {
+    font-size: 0.85rem;
+  }
+
+  .btn-start-app {
+    padding: 10px 20px;
+    font-size: 0.9rem;
+  }
 }
