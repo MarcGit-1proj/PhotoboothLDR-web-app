@@ -1912,7 +1912,7 @@ body.light-mode .profile-modal-content {
 
 body.light-mode .profile-modal-content h2 {
   color: #18181b;
-}
+} 
 
 body.light-mode .profile-modal-text {
   color: #4c4c53;
@@ -1947,5 +1947,14 @@ body.light-mode .profile-stalk-private-note {
 @media (max-width: 760px) {
   body.light-mode .profile-divider-line {
     background: linear-gradient(to right, transparent, rgba(0, 0, 0, 0.2), transparent);
+  }
+}
+/* Desktop: i-pin ang back button sa pinaka-leftside ng header */
+@media (min-width: 761px) {
+  .profile-search-group .profile-back {
+    position: absolute;
+    left: 40px;
+    top: 50%;
+    transform: translateY(-50%);
   }
 }
