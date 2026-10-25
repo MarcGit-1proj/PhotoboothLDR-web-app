@@ -717,28 +717,47 @@ export default function MainPage({ user, onLogout }) {
           </div>
         </div>
       )}
+{/* About Modal */}
+{showAboutModal && (
+  <div className="modal-overlay" onClick={() => setShowAboutModal(false)}>
+    <div className="modal-content about-modal-content" onClick={(e) => e.stopPropagation()}>
+      <div className="modal-icon">
+        <svg className="icon-svg icon-bold" viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="16" x2="12" y2="12"></line>
+          <line x1="12" y1="8" x2="12.01" y2="8"></line>
+        </svg>
+      </div>
+      <h2>ABOUT</h2>
+      <div className="about-scrollable-body">
+        <p className="modal-text">
+          <span className="modal-highlight">SnapSync</span> is a web application built for people in long-distance relationships — not just couples, but friends and peers too. It offers a range of features to keep you connected across the distance: <span className="modal-highlight">Live Call</span> lets you video call your partner or friends in real time, just like FaceTime; <span className="modal-highlight">Photobooth</span> lets you take pictures together and choose from a variety of frame designs for your photo strips; <span className="modal-highlight">Messages</span> keeps you chatting with your partner anytime; and <span className="modal-highlight">Mini Games</span> lets you play live together, interacting in real time. For an enhanced experience, <span className="modal-highlight">Premium Plan</span> unlocks exclusive perks such as additional photobooth frame designs, unlimited ID generation, faster connectivity, and more.
+        </p>
 
-      {/* About Modal */}
-      {showAboutModal && (
-        <div className="modal-overlay" onClick={() => setShowAboutModal(false)}>
-          <div className="modal-content about-modal-content" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-icon">
-              <svg className="icon-svg icon-bold" viewBox="0 0 24 24">
-                <circle cx="12" cy="12" r="10"></circle>
-                <line x1="12" y1="16" x2="12" y2="12"></line>
-                <line x1="12" y1="8" x2="12.01" y2="8"></line>
-              </svg>
-            </div>
-            <h2>ABOUT</h2>
-            <div className="about-scrollable-body">
-              <p className="modal-text">
-                <span className="modal-highlight">SnapSync</span> is a web application designed to help long-distance partners connect through shared moments, real-time communication, and interactive memories.
-              </p>
-            </div>
-            <button className="modal-close-btn" onClick={() => setShowAboutModal(false)}>Close</button>
-          </div>
+        <div className="about-section-label">
+          <span>Application-Exclusive Features</span>
         </div>
-      )}
+
+        <p className="modal-text">
+          Once downloaded as an application, SnapSync also includes core privacy and security features. Messages offers an Incognito Mode that disables screenshots, screen recording, and message forwarding, while any attempt to photograph the screen using another device is marked with a watermark. Email and name verification are required to help prevent impersonation and data leaks, and the same screenshot and screen-recording protections apply during Live Calls — ensuring that every feature keeps your conversations and moments private.
+        </p>
+
+        <div className="about-download-wrapper">
+          <span className="soon-badge">Coming Soon</span>
+          <button className="about-download-btn" disabled>
+            <svg className="icon-svg" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path>
+              <polyline points="16 6 12 2 8 6"></polyline>
+              <line x1="12" y1="2" x2="12" y2="15"></line>
+            </svg>
+            Download SnapSync App
+          </button>
+        </div>
+      </div>
+      <button className="modal-close-btn" onClick={() => setShowAboutModal(false)}>Close</button>
+    </div>
+  </div>
+)}
 
       {/* Contact Modal */}
       {showContactModal && (
