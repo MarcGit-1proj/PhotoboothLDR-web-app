@@ -980,7 +980,7 @@ export default function UsersProfilePage() {
                                     onClick={() => setStalkTarget(c)}
                                   >
                                     <SearchIcon />
-                                    Stalk
+                                    Details
                                   </button>
                                   <button
                                     className="profile-conn-action-btn disconnect"
