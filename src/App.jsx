@@ -122,7 +122,11 @@ export default function App() {
         />
         <Route
           path="/messages"
-          element={<ProtectedRoute allowed={isLoggedIn}><MessagesPage /></ProtectedRoute>}
+          element={
+            <ProtectedRoute allowed={isLoggedIn}>
+              <MessagesPage user={isRealUser ? user : null} />
+            </ProtectedRoute>
+          }
         />
         <Route
           path="/photobooth"

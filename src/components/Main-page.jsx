@@ -556,21 +556,18 @@ export default function MainPage({ user, onLogout }) {
             </button>
           </div>
 
-          {/* 3. Messages - COMING SOON */}
-          <div className="menu-card-wrapper">
-            <span className="soon-badge">Soon</span>
-            <button className="menu-card coming-soon" disabled>
-              <div className="card-icon-wrapper">
-                <svg className="animated-svg-icon" viewBox="0 0 24 24">
-                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-                </svg>
-              </div>
-              <div className="card-info">
-                <h3>Messages</h3>
-                <p>Chat and connect with each other</p>
-              </div>
-            </button>
-          </div>
+          {/* 3. Messages - ACTIVE */}
+          <button className="menu-card" onClick={() => handleFeatureNavigate('/messages')}>
+            <div className="card-icon-wrapper">
+              <svg className="animated-svg-icon" viewBox="0 0 24 24">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+              </svg>
+            </div>
+            <div className="card-info">
+              <h3>Messages</h3>
+              <p>Chat and connect with each other</p>
+            </div>
+          </button>
 
           {/* 4. Mini Games */}
           <div className="menu-card-wrapper">
