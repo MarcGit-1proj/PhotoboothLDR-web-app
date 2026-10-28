@@ -6,6 +6,53 @@ function initialOf(name) {
   return (name || "?").trim().charAt(0).toUpperCase();
 }
 
+// Shows the real profile photo when one exists; falls back to the
+// initial-letter circle if there's no avatar_url or the image fails to load.
+function Avatar({ src, name, className }) {
+  const [broken, setBroken] = useState(false);
+
+  if (src && !broken) {
+    return (
+      <img
+        className={className}
+        src={src}
+        alt={name || "User"}
+        onError={() => setBroken(true)}
+      />
+    );
+  }
+
+  return <span className={className}>{initialOf(name)}</span>;
+}
+
+// sending = optimistic, just fired, waiting for the DB insert to confirm
+// sent    = confirmed, saved in the messages table
+// failed  = insert errored out
+function StatusIcon({ status }) {
+  if (status === "sending") {
+    return (
+      <svg className="status-icon sending" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+        <circle cx="12" cy="12" r="9" />
+        <path d="M12 7v5l3 2" />
+      </svg>
+    );
+  }
+  if (status === "failed") {
+    return (
+      <svg className="status-icon failed" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+        <circle cx="12" cy="12" r="9" />
+        <line x1="9" y1="9" x2="15" y2="15" />
+        <line x1="15" y1="9" x2="9" y2="15" />
+      </svg>
+    );
+  }
+  return (
+    <svg className="status-icon sent" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+      <polyline points="20 6 9 17 4 12" />
+    </svg>
+  );
+}
+
 export default function ChatThread({ user, contact, onBack }) {
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState("");
@@ -40,7 +87,8 @@ export default function ChatThread({ user, contact, onBack }) {
     if (error) {
       console.error("Failed to load messages:", error.message);
     } else {
-      setMessages(data || []);
+      // Anything already persisted in the DB counts as "sent".
+      setMessages((data || []).map((m) => ({ ...m, status: "sent" })));
     }
 
     setLoading(false);
@@ -59,7 +107,12 @@ export default function ChatThread({ user, contact, onBack }) {
             (msg.sender_id === contact.id && msg.receiver_id === user.id);
 
           if (isRelevant) {
-            setMessages((prev) => [...prev, msg]);
+            setMessages((prev) => {
+              // Avoid duplicating a message we already added optimistically
+              // (matched by real id) when our own insert echoes back.
+              if (prev.some((m) => m.id === msg.id)) return prev;
+              return [...prev, { ...msg, status: "sent" }];
+            });
           }
         }
       )
@@ -75,19 +128,42 @@ export default function ChatThread({ user, contact, onBack }) {
 
     setNewMessage("");
 
-    const { error } = await supabase.from("messages").insert({
+    const tempId = `temp-${Date.now()}`;
+    const optimisticMsg = {
+      id: tempId,
       sender_id: user.id,
       receiver_id: contact.id,
       content: trimmed,
-    });
+      created_at: new Date().toISOString(),
+      status: "sending",
+    };
+    setMessages((prev) => [...prev, optimisticMsg]);
+
+    const { data, error } = await supabase
+      .from("messages")
+      .insert({
+        sender_id: user.id,
+        receiver_id: contact.id,
+        content: trimmed,
+      })
+      .select()
+      .single();
 
     if (error) {
       console.error("Failed to send message:", error.message);
+      setMessages((prev) =>
+        prev.map((m) => (m.id === tempId ? { ...m, status: "failed" } : m))
+      );
+      return;
     }
+
+    setMessages((prev) =>
+      prev.map((m) => (m.id === tempId ? { ...data, status: "sent" } : m))
+    );
   }
 
   // Groups consecutive bubbles from the same sender so we don't repeat
-  // the timestamp on every single message.
+  // the timestamp (and the avatar) on every single message.
   function shouldShowTimestamp(index) {
     const next = messages[index + 1];
     if (!next) return true;
@@ -108,7 +184,7 @@ export default function ChatThread({ user, contact, onBack }) {
             </svg>
           </button>
         )}
-        <span className="chat-avatar">{initialOf(contact.nickname)}</span>
+        <Avatar src={contact.avatar_url} name={contact.nickname} className="chat-avatar" />
         <span className="chat-contact-name">{contact.nickname}</span>
       </div>
 
@@ -116,24 +192,48 @@ export default function ChatThread({ user, contact, onBack }) {
         {messages.length === 0 ? (
           <p className="chat-empty">No messages yet. Say hello!</p>
         ) : (
-          messages.map((msg, i) => (
-            <div
-              key={msg.id}
-              className={`chat-bubble-row ${
-                msg.sender_id === user.id ? "sent" : "received"
-              }`}
-            >
-              <span className="chat-bubble">{msg.content}</span>
-              {shouldShowTimestamp(i) && (
-                <span className="chat-timestamp">
-                  {new Date(msg.created_at).toLocaleTimeString([], {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}
-                </span>
-              )}
-            </div>
-          ))
+          messages.map((msg, i) => {
+            const isMine = msg.sender_id === user.id;
+            const showAvatar = !isMine && shouldShowTimestamp(i);
+
+            return (
+              <div
+                key={msg.id}
+                className={`chat-bubble-row ${isMine ? "sent" : "received"}`}
+              >
+                <div className="chat-bubble-line">
+                  {!isMine && (
+                    <span className="bubble-avatar-slot">
+                      {showAvatar && (
+                        <Avatar
+                          src={contact.avatar_url}
+                          name={contact.nickname}
+                          className="bubble-avatar"
+                        />
+                      )}
+                    </span>
+                  )}
+
+                  <span className="chat-bubble">{msg.content}</span>
+
+                  {isMine && (
+                    <span className="bubble-status-slot" title={msg.status}>
+                      <StatusIcon status={msg.status || "sent"} />
+                    </span>
+                  )}
+                </div>
+
+                {shouldShowTimestamp(i) && (
+                  <span className="chat-timestamp">
+                    {new Date(msg.created_at).toLocaleTimeString([], {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </span>
+                )}
+              </div>
+            );
+          })
         )}
         <div ref={bottomRef} />
       </div>
