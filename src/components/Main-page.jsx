@@ -63,7 +63,6 @@ const toInputDate = (d) => {
 
 const dayDiff = (a, b) => Math.round((a - b) / 86400000);
 
-// Guest: galing sa localStorage (sa browser lang)
 const loadCouple = () => {
   try {
     const raw = localStorage.getItem(COUPLE_STORAGE_KEY);
@@ -73,7 +72,6 @@ const loadCouple = () => {
   }
 };
 
-// Naka-login: galing sa Supabase account (user_metadata.couple)
 const coupleFromUser = (user) => ({
   ...COUPLE_DEFAULTS,
   ...(user?.user_metadata?.couple || {})
@@ -115,11 +113,11 @@ export default function MainPage({ user, onLogout }) {
   const [showContactModal, setShowContactModal] = useState(false);
   const [showDeveloperModal, setShowDeveloperModal] = useState(false);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
+  const [showPrivacyModal, setShowPrivacyModal] = useState(false); // Modal state for web privacy notice
 
   const [isLightMode, setIsLightMode] = useState(false);
   const [onlineCount, setOnlineCount] = useState(() => randInt(8, 70));
 
-  // Naka-login = account data; guest = localStorage
   const [couple, setCouple] = useState(() => (user ? coupleFromUser(user) : loadCouple()));
   const [now, setNow] = useState(() => new Date());
   const [widgetModal, setWidgetModal] = useState(null);
@@ -259,8 +257,6 @@ export default function MainPage({ user, onLogout }) {
     }, 400);
   };
 
-  // User Profile: naka-login = diretso sa profile.
-  // Guest = dadalhin muna sa login page (nililinis ang guest session).
   const handleProfileClick = () => {
     if (user) {
       handleFeatureNavigate('/profile');
@@ -329,8 +325,6 @@ export default function MainPage({ user, onLogout }) {
   };
   const updateDraft = (patch) => setDraft((prev) => ({ ...prev, ...patch }));
 
-  // Naka-login: sine-save sa Supabase account. Guest: sa localStorage.
-  // Nag-a-update lang ang screen kapag matagumpay ang pag-save.
   const persistCouple = async (next) => {
     setSaveError('');
     if (user) {
@@ -556,8 +550,8 @@ export default function MainPage({ user, onLogout }) {
             </button>
           </div>
 
-          {/* 3. Messages - ACTIVE */}
-          <button className="menu-card" onClick={() => handleFeatureNavigate('/messages')}>
+          {/* 3. Messages - ACTIVE (Triggers Privacy Notice Modal) */}
+          <button className="menu-card" onClick={() => setShowPrivacyModal(true)}>
             <div className="card-icon-wrapper">
               <svg className="animated-svg-icon" viewBox="0 0 24 24">
                 <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
@@ -714,47 +708,79 @@ export default function MainPage({ user, onLogout }) {
           </div>
         </div>
       )}
-{/* About Modal */}
-{showAboutModal && (
-  <div className="modal-overlay" onClick={() => setShowAboutModal(false)}>
-    <div className="modal-content about-modal-content" onClick={(e) => e.stopPropagation()}>
-      <div className="modal-icon">
-        <svg className="icon-svg icon-bold" viewBox="0 0 24 24">
-          <circle cx="12" cy="12" r="10"></circle>
-          <line x1="12" y1="16" x2="12" y2="12"></line>
-          <line x1="12" y1="8" x2="12.01" y2="8"></line>
-        </svg>
-      </div>
-      <h2>ABOUT</h2>
-      <div className="about-scrollable-body">
-        <p className="modal-text">
-          <span className="modal-highlight">SnapSync</span> is a web application built for people in long-distance relationships — not just couples, but friends and peers too. It offers a range of features to keep you connected across the distance: <span className="modal-highlight">Live Call</span> lets you video call your partner or friends in real time, just like FaceTime; <span className="modal-highlight">Photobooth</span> lets you take pictures together and choose from a variety of frame designs for your photo strips; <span className="modal-highlight">Messages</span> keeps you chatting with your partner anytime; and <span className="modal-highlight">Mini Games</span> lets you play live together, interacting in real time. For an enhanced experience, <span className="modal-highlight">Premium Plan</span> unlocks exclusive perks such as additional photobooth frame designs, unlimited ID generation, faster connectivity, and more.
-        </p>
 
-        <div className="about-section-label">
-          <span>Application-Exclusive Features</span>
+      {/* Messages Privacy & Security Notice Modal */}
+      {showPrivacyModal && (
+        <div className="modal-overlay" onClick={() => setShowPrivacyModal(false)}>
+          <div className="modal-content privacy-notice-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-icon">
+              <svg className="icon-svg icon-bold" viewBox="0 0 24 24">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+              </svg>
+            </div>
+            <h2>PRIVACY & SECURITY NOTICE</h2>
+            <div className="privacy-text-container">
+              <p className="modal-text">
+                Please note that this is currently a <strong>web-based version</strong>. Because it runs on a browser, full privacy protection cannot be guaranteed, and screenshots or screen recordings may still be possible.
+              </p>
+              <p className="modal-text">
+                If you want fully secured conversations with built-in screenshot and recording restrictions, please download and use the official <strong>SnapSync application</strong>.
+              </p>
+            </div>
+            <button
+              className="modal-close-btn privacy-action-btn"
+              onClick={() => {
+                setShowPrivacyModal(false);
+                handleFeatureNavigate('/messages');
+              }}
+            >
+              Got it, Proceed to Web Chat
+            </button>
+          </div>
         </div>
+      )}
+      
+      {/* About Modal */}
+      {showAboutModal && (
+        <div className="modal-overlay" onClick={() => setShowAboutModal(false)}>
+          <div className="modal-content about-modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-icon">
+              <svg className="icon-svg icon-bold" viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="16" x2="12" y2="12"></line>
+                <line x1="12" y1="8" x2="12.01" y2="8"></line>
+              </svg>
+            </div>
+            <h2>ABOUT</h2>
+            <div className="about-scrollable-body">
+              <p className="modal-text">
+                <span className="modal-highlight">SnapSync</span> is a web application built for people in long-distance relationships — not just couples, but friends and peers too. It offers a range of features to keep you connected across the distance: <span className="modal-highlight">Live Call</span> lets you video call your partner or friends in real time, just like FaceTime; <span className="modal-highlight">Photobooth</span> lets you take pictures together and choose from a variety of frame designs for your photo strips; <span className="modal-highlight">Messages</span> keeps you chatting with your partner anytime; and <span className="modal-highlight">Mini Games</span> lets you play live together, interacting in real time. For an enhanced experience, <span className="modal-highlight">Premium Plan</span> unlocks exclusive perks such as additional photobooth frame designs, unlimited ID generation, faster connectivity, and more.
+              </p>
 
-        <p className="modal-text">
-          Once downloaded as an application, SnapSync also includes core privacy and security features. Messages offers an Incognito Mode that disables screenshots, screen recording, and message forwarding, while any attempt to photograph the screen using another device is marked with a watermark. Email and name verification are required to help prevent impersonation and data leaks, and the same screenshot and screen-recording protections apply during Live Calls — ensuring that every feature keeps your conversations and moments private.
-        </p>
+              <div className="about-section-label">
+                <span>Application-Exclusive Features</span>
+              </div>
 
-        <div className="about-download-wrapper">
-          <span className="soon-badge">Coming Soon</span>
-          <button className="about-download-btn" disabled>
-            <svg className="icon-svg" viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path>
-              <polyline points="16 6 12 2 8 6"></polyline>
-              <line x1="12" y1="2" x2="12" y2="15"></line>
-            </svg>
-            Download SnapSync App
-          </button>
+              <p className="modal-text">
+                Once downloaded as an application, SnapSync also includes core privacy and security features. Messages offers an Incognito Mode that disables screenshots, screen recording, and message forwarding, while any attempt to photograph the screen using another device is marked with a watermark. Email and name verification are required to help prevent impersonation and data leaks, and the same screenshot and screen-recording protections apply during Live Calls — ensuring that every feature keeps your conversations and moments private.
+              </p>
+
+              <div className="about-download-wrapper">
+                <span className="soon-badge">Coming Soon</span>
+                <button className="about-download-btn" disabled>
+                  <svg className="icon-svg" viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path>
+                    <polyline points="16 6 12 2 8 6"></polyline>
+                    <line x1="12" y1="2" x2="12" y2="15"></line>
+                  </svg>
+                  Download SnapSync App
+                </button>
+              </div>
+            </div>
+            <button className="modal-close-btn" onClick={() => setShowAboutModal(false)}>Close</button>
+          </div>
         </div>
-      </div>
-      <button className="modal-close-btn" onClick={() => setShowAboutModal(false)}>Close</button>
-    </div>
-  </div>
-)}
+      )}
 
       {/* Contact Modal */}
       {showContactModal && (
@@ -800,42 +826,42 @@ export default function MainPage({ user, onLogout }) {
       {/* Settings Modal */}
       {showSettingsModal && (
         <div className="modal-overlay" onClick={() => setShowSettingsModal(false)}>
-          <div className="modal-content settings-modal-content" onClick={(e) => e.stopPropagation()}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <div className="modal-icon">
               <svg className="icon-svg icon-bold" viewBox="0 0 24 24">
                 <circle cx="12" cy="12" r="3"></circle>
-                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06-.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
               </svg>
             </div>
             <h2>SETTINGS</h2>
-
             <div className="settings-options-list">
               <div className="setting-item">
                 <div className="setting-label">
-                  <span>Light Mode</span>
-                  <p>Switch between dark and light appearance</p>
+                  <span>Theme Appearance</span>
+                  <p>Switch between dark and light mode</p>
                 </div>
-                <label className="toggle-switch">
-                  <input
-                    type="checkbox"
-                    checked={isLightMode}
-                    onChange={() => {
-                      const newLight = !isLightMode;
-                      setIsLightMode(newLight);
-                      if (newLight) {
-                        document.body.classList.add('light-mode');
-                        localStorage.setItem('snapsync_theme', 'light');
-                      } else {
-                        document.body.classList.remove('light-mode');
-                        localStorage.setItem('snapsync_theme', 'dark');
-                      }
-                    }}
-                  />
-                  <span className="slider"></span>
-                </label>
+                <button
+                  className={`setting-toggle-btn ${!isLightMode ? 'active' : ''}`}
+                  onClick={() => {
+                    const nextMode = !isLightMode;
+                    setIsLightMode(nextMode);
+                    if (nextMode) {
+                      localStorage.setItem('snapsync_theme', 'light');
+                      document.body.classList.add('light-mode');
+                    } else {
+                      localStorage.setItem('snapsync_theme', 'dark');
+                      document.body.classList.remove('light-mode');
+                    }
+                  }}
+                >
+                  {isLightMode ? 'Light' : 'Dark'}
+                </button>
               </div>
             </div>
-
+            <div className="settings-version-footer">
+              <span>App Version</span>
+              <strong>v{APP_VERSION}</strong>
+            </div>
             <button className="modal-close-btn" onClick={() => setShowSettingsModal(false)}>Close</button>
           </div>
         </div>

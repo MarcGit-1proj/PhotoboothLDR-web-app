@@ -1226,3 +1226,49 @@ body.light-mode .modal-secondary-btn:hover {
   top: -10px;
   right: calc(50% - 100px);
 }
+/* --- Custom Styling para sa Privacy Notice Modal --- */
+.privacy-notice-modal {
+  max-width: 440px !important;
+  padding: 36px 28px !important;
+  text-align: center;
+}
+
+.privacy-text-container {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-bottom: 24px;
+  width: 100%;
+}
+
+.privacy-text-container .modal-text {
+  font-size: 0.9rem;
+  line-height: 1.6;
+  color: #d4d4d8;
+  margin: 0;
+  text-align: center;
+}
+
+.privacy-text-container .modal-text strong {
+  color: #f4f4f5;
+  font-weight: 600;
+}
+
+.privacy-action-btn {
+  width: 100% !important;
+  background: linear-gradient(135deg, #ec4899, #a855f7) !important;
+  border: none !important;
+  border-radius: 12px !important;
+  padding: 14px 20px !important;
+  font-size: 0.95rem !important;
+  font-weight: 600 !important;
+  color: #ffffff !important;
+  cursor: pointer;
+  box-shadow: 0 4px 15px rgba(236, 72, 153, 0.3);
+  transition: filter 0.2s ease, transform 0.15s ease;
+}
+
+.privacy-action-btn:hover {
+  filter: brightness(1.1);
+  transform: translateY(-2px);
+}
