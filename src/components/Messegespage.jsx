@@ -100,7 +100,7 @@ export default function MessagesPage({ user }) {
                 <button
                   className={`contact-item ${
                     activeContact?.id === c.id ? "active" : ""
-                  }`}
+                  } ${c.lastMessage ? "has-chatted" : ""}`}
                   onClick={() => setActiveContact(c)}
                 >
                   <Avatar src={c.avatar_url} name={c.nickname} className="contact-avatar" />

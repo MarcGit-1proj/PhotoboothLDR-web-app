@@ -1,9 +1,24 @@
+/* ==========================================================
+   SnapSync theme palette (same accents as the Main page cards)
+   base bg   #0b0910
+   card bg   #15121c
+   card hov  #1c1826
+   border    rgba(255,255,255,0.07)
+   pink      #ec4899
+   purple    #a855f7
+   text      #f5f3f7
+   muted     #9b95a6
+   ========================================================== */
+
 .messages-page {
   display: flex;
   height: 100vh;
   width: 100%;
-  background: #0f0f10;
-  color: #f2f2f3;
+  background:
+    radial-gradient(ellipse 900px 480px at 88% -8%, rgba(236, 72, 153, 0.13), transparent 60%),
+    radial-gradient(ellipse 700px 480px at -8% 108%, rgba(168, 85, 247, 0.11), transparent 58%),
+    #0b0910;
+  color: #f5f3f7;
   overflow: hidden;
 }
 
@@ -11,22 +26,28 @@
 .messages-sidebar {
   width: 320px;
   min-width: 280px;
-  border-right: 1px solid #1d1d20;
+  border-right: 1px solid rgba(255, 255, 255, 0.07);
   padding: 20px 10px 16px;
   overflow-y: auto;
-  background: #141416;
+  background: rgba(21, 18, 28, 0.55);
+  backdrop-filter: blur(10px);
   box-sizing: border-box;
 }
 
 .messages-sidebar h2 {
   font-size: 20px;
-  font-weight: 700;
+  font-weight: 800;
   margin: 0 0 16px;
   padding: 0 10px;
+  background: linear-gradient(135deg, #f5f3f7 0%, #f5f3f7 55%, #ec4899 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  width: fit-content;
 }
 
 .no-contacts {
-  color: #6b6b70;
+  color: #9b95a6;
   font-size: 14px;
   margin-top: 20px;
   padding: 0 10px;
@@ -49,13 +70,13 @@
   gap: 12px;
   align-items: flex-start;
   padding: 12px 38px 12px 10px;
-  border: none;
-  border-radius: 12px;
+  border: 1px solid transparent;
+  border-radius: 16px;
   background: transparent;
   cursor: pointer;
   text-align: left;
   position: relative;
-  transition: background 0.15s ease;
+  transition: background 0.15s ease, border-color 0.15s ease;
   font-family: inherit;
   color: inherit;
   min-height: 44px;
@@ -63,11 +84,13 @@
 }
 
 .contact-item:hover {
-  background: #1b1b1f;
+  background: #1c1826;
+  border-color: rgba(255, 255, 255, 0.06);
 }
 
 .contact-item.active {
-  background: #1b1b2a;
+  background: linear-gradient(135deg, rgba(236, 72, 153, 0.14), rgba(168, 85, 247, 0.1));
+  border-color: rgba(236, 72, 153, 0.3);
 }
 
 .contact-item.active::before {
@@ -78,7 +101,13 @@
   bottom: 10px;
   width: 3px;
   border-radius: 3px;
-  background: #4a4af0;
+  background: linear-gradient(180deg, #ec4899, #a855f7);
+}
+
+/* Subtle permanent tint for connections you've already chatted with,
+   so they read differently from a fresh "No messages yet" connection. */
+.contact-item.has-chatted:not(.active) {
+  background: rgba(236, 72, 153, 0.035);
 }
 
 .contact-avatar {
@@ -86,25 +115,25 @@
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  background: #2a2a2e;
-  color: #d9d9db;
+  background: #241f2c;
+  color: #e3ddea;
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 700;
   font-size: 14px;
+  box-sizing: border-box;
 }
 
 /* When Avatar renders an <img> instead of the initial-letter <span>,
    keep the same circle size and crop the photo to fill it. */
 img.contact-avatar {
   object-fit: cover;
-  background: #2a2a2e;
+  background: #241f2c;
 }
 
 .contact-item.active .contact-avatar {
-  background: #2a2a52;
-  color: #a9a9ff;
+  box-shadow: 0 0 0 2px #0b0910, 0 0 0 4px #ec4899;
 }
 
 .contact-main {
@@ -121,6 +150,7 @@ img.contact-avatar {
 .contact-nickname {
   font-weight: 600;
   font-size: 14px;
+  color: #f5f3f7;
   display: inline-flex;
   align-items: center;
   gap: 5px;
@@ -128,12 +158,12 @@ img.contact-avatar {
 
 .muted-icon {
   flex: none;
-  color: #6b6b70;
+  color: #9b95a6;
 }
 
 .contact-time {
   font-size: 11px;
-  color: #6b6b70;
+  color: #9b95a6;
   flex: none;
 }
 
@@ -141,7 +171,7 @@ img.contact-avatar {
   display: block;
   margin-top: 2px;
   font-size: 13px;
-  color: #9a9aa0;
+  color: #a79fb3;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -158,7 +188,7 @@ img.contact-avatar {
   border: none;
   border-radius: 8px;
   background: transparent;
-  color: #8b8b90;
+  color: #a79fb3;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -167,8 +197,8 @@ img.contact-avatar {
 }
 
 .contact-menu-btn:hover {
-  background: #232327;
-  color: #f2f2f3;
+  background: #241f2c;
+  color: #f5f3f7;
 }
 
 .contact-menu {
@@ -177,10 +207,10 @@ img.contact-avatar {
   top: calc(100% - 4px);
   z-index: 10;
   min-width: 160px;
-  background: #1c1c20;
-  border: 1px solid #2a2a2e;
-  border-radius: 10px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  background: #18141f;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
   padding: 6px;
   display: flex;
   flex-direction: column;
@@ -192,16 +222,16 @@ img.contact-avatar {
   text-align: left;
   padding: 9px 10px;
   border: none;
-  border-radius: 7px;
+  border-radius: 8px;
   background: transparent;
-  color: #f2f2f3;
+  color: #f5f3f7;
   font-size: 13px;
   cursor: pointer;
   font-family: inherit;
 }
 
 .contact-menu button:hover {
-  background: #28282d;
+  background: rgba(236, 72, 153, 0.12);
 }
 
 /* ---------- Chat area ---------- */
@@ -209,7 +239,7 @@ img.contact-avatar {
   flex: 1;
   display: flex;
   flex-direction: column;
-  background: #0f0f10;
+  background: transparent;
   min-width: 0;
 }
 
@@ -218,7 +248,7 @@ img.contact-avatar {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #6b6b70;
+  color: #9b95a6;
   font-size: 15px;
 }
 
@@ -228,7 +258,7 @@ img.contact-avatar {
   align-items: center;
   justify-content: center;
   height: 100vh;
-  color: #9a9aa0;
+  color: #a79fb3;
   font-size: 16px;
 }
 

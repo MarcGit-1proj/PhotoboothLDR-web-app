@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { supabase } from "../supabaseClient";
 import "../style/ChatThread.css";
 
@@ -29,6 +29,8 @@ function Avatar({ src, name, className }) {
 // sent    = confirmed, saved in the messages table
 // failed  = insert errored out
 function StatusIcon({ status }) {
+  const gradientId = useId();
+
   if (status === "sending") {
     return (
       <svg className="status-icon sending" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
@@ -46,9 +48,26 @@ function StatusIcon({ status }) {
       </svg>
     );
   }
+  // sent — WhatsApp-style double checkmark, in the pink -> purple gradient
   return (
-    <svg className="status-icon sent" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-      <polyline points="20 6 9 17 4 12" />
+    <svg
+      className="status-icon sent"
+      width="16"
+      height="12"
+      viewBox="0 0 24 18"
+      fill="none"
+      strokeWidth="2.6"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <defs>
+        <linearGradient id={gradientId} x1="0" y1="0" x2="24" y2="18" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stopColor="#ec4899" />
+          <stop offset="100%" stopColor="#a855f7" />
+        </linearGradient>
+      </defs>
+      <polyline points="1 10 6 15 14 4" stroke={`url(#${gradientId})`} />
+      <polyline points="9 10 14 15 23 3" stroke={`url(#${gradientId})`} />
     </svg>
   );
 }
@@ -185,7 +204,13 @@ export default function ChatThread({ user, contact, onBack }) {
           </button>
         )}
         <Avatar src={contact.avatar_url} name={contact.nickname} className="chat-avatar" />
-        <span className="chat-contact-name">{contact.nickname}</span>
+        <div className="chat-header-info">
+          <span className="chat-contact-name">{contact.nickname}</span>
+          <span className="chat-status">
+            <span className="chat-status-dot" />
+            Available
+          </span>
+        </div>
       </div>
 
       <div className="chat-messages">
@@ -248,6 +273,10 @@ export default function ChatThread({ user, contact, onBack }) {
         <input
           id="chat-input"
           type="text"
+          autoComplete="off"
+          autoCorrect="off"
+          autoCapitalize="off"
+          spellCheck="false"
           value={newMessage}
           onChange={(e) => setNewMessage(e.target.value)}
           placeholder="Type a message..."
