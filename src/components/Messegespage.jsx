@@ -7,6 +7,25 @@ function initialOf(name) {
   return (name || "?").trim().charAt(0).toUpperCase();
 }
 
+// Shows the real profile photo when one exists; falls back to the
+// initial-letter circle if there's no avatar_url or the image fails to load.
+function Avatar({ src, name, className = "contact-avatar" }) {
+  const [broken, setBroken] = useState(false);
+
+  if (src && !broken) {
+    return (
+      <img
+        className={className}
+        src={src}
+        alt={name || "Contact"}
+        onError={() => setBroken(true)}
+      />
+    );
+  }
+
+  return <span className={className}>{initialOf(name)}</span>;
+}
+
 export default function MessagesPage({ user }) {
   const [contacts, setContacts] = useState([]);
   const [activeContact, setActiveContact] = useState(null);
@@ -84,7 +103,7 @@ export default function MessagesPage({ user }) {
                   }`}
                   onClick={() => setActiveContact(c)}
                 >
-                  <span className="contact-avatar">{initialOf(c.nickname)}</span>
+                  <Avatar src={c.avatar_url} name={c.nickname} className="contact-avatar" />
                   <span className="contact-main">
                     <span className="contact-top-row">
                       <span className="contact-nickname">{c.nickname}</span>
