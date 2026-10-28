@@ -95,6 +95,13 @@
   font-size: 14px;
 }
 
+/* When Avatar renders an <img> instead of the initial-letter <span>,
+   keep the same circle size and crop the photo to fill it. */
+img.contact-avatar {
+  object-fit: cover;
+  background: #2a2a2e;
+}
+
 .contact-item.active .contact-avatar {
   background: #2a2a52;
   color: #a9a9ff;
