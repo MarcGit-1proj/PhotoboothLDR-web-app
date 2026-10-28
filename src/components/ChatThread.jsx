@@ -195,40 +195,45 @@ export default function ChatThread({ user, contact, onBack }) {
           messages.map((msg, i) => {
             const isMine = msg.sender_id === user.id;
             const showAvatar = !isMine && shouldShowTimestamp(i);
+            const showTimestamp = shouldShowTimestamp(i);
 
+            // One flat row per message: [avatar?] [bubble + its own
+            // timestamp, stacked] [status?]. Every row gets the same,
+            // fixed margin-bottom below — spacing never depends on
+            // whether a neighboring bubble is one line or three, so
+            // short and tall messages never crowd or overlap each other.
             return (
               <div
                 key={msg.id}
                 className={`chat-bubble-row ${isMine ? "sent" : "received"}`}
               >
-                <div className="chat-bubble-line">
-                  {!isMine && (
-                    <span className="bubble-avatar-slot">
-                      {showAvatar && (
-                        <Avatar
-                          src={contact.avatar_url}
-                          name={contact.nickname}
-                          className="bubble-avatar"
-                        />
-                      )}
-                    </span>
-                  )}
+                {!isMine && (
+                  <span className="bubble-avatar-slot">
+                    {showAvatar && (
+                      <Avatar
+                        src={contact.avatar_url}
+                        name={contact.nickname}
+                        className="bubble-avatar"
+                      />
+                    )}
+                  </span>
+                )}
 
+                <div className="bubble-col">
                   <span className="chat-bubble">{msg.content}</span>
-
-                  {isMine && (
-                    <span className="bubble-status-slot" title={msg.status}>
-                      <StatusIcon status={msg.status || "sent"} />
+                  {showTimestamp && (
+                    <span className="chat-timestamp">
+                      {new Date(msg.created_at).toLocaleTimeString([], {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
                     </span>
                   )}
                 </div>
 
-                {shouldShowTimestamp(i) && (
-                  <span className="chat-timestamp">
-                    {new Date(msg.created_at).toLocaleTimeString([], {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
+                {isMine && (
+                  <span className="bubble-status-slot" title={msg.status}>
+                    <StatusIcon status={msg.status || "sent"} />
                   </span>
                 )}
               </div>
