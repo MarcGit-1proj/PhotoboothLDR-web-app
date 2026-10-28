@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { supabase } from "../supabaseClient";
 import ChatThread from "./ChatThread";
 import EmptyChatState from "./EmptyChatState";
@@ -6,6 +6,22 @@ import "../style/Messegespage.css";
 
 function initialOf(name) {
   return (name || "?").trim().charAt(0).toUpperCase();
+}
+
+const LAST_READ_KEY = "snapsync_last_read_v1";
+
+function getLastReadMap() {
+  try {
+    return JSON.parse(localStorage.getItem(LAST_READ_KEY)) || {};
+  } catch {
+    return {};
+  }
+}
+
+function setLastRead(contactId) {
+  const map = getLastReadMap();
+  map[contactId] = new Date().toISOString();
+  localStorage.setItem(LAST_READ_KEY, JSON.stringify(map));
 }
 
 // Shows the real profile photo when one exists; falls back to the
@@ -31,9 +47,60 @@ export default function MessagesPage({ user }) {
   const [contacts, setContacts] = useState([]);
   const [activeContact, setActiveContact] = useState(null);
   const [loading, setLoading] = useState(true);
+  const activeContactRef = useRef(null);
+
+  useEffect(() => {
+    activeContactRef.current = activeContact;
+  }, [activeContact]);
 
   useEffect(() => {
     if (user) loadContacts();
+  }, [user]);
+
+  // Live-updates unread counts and last-message previews when a new
+  // message arrives, without needing a full page refresh.
+  useEffect(() => {
+    if (!user) return;
+
+    const channel = supabase
+      .channel(`sidebar-messages-${user.id}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "messages",
+          filter: `receiver_id=eq.${user.id}`,
+        },
+        (payload) => {
+          const msg = payload.new;
+
+          setContacts((prev) => {
+            const idx = prev.findIndex((c) => c.id === msg.sender_id);
+            if (idx === -1) return prev;
+
+            const isActive = activeContactRef.current?.id === msg.sender_id;
+            if (isActive) setLastRead(msg.sender_id);
+
+            const updated = {
+              ...prev[idx],
+              lastMessage: msg.content,
+              lastMessageAt: msg.created_at,
+              lastMessageMine: false,
+              unreadCount: isActive ? 0 : (prev[idx].unreadCount || 0) + 1,
+            };
+
+            const next = [...prev];
+            next.splice(idx, 1);
+            return [updated, ...next];
+          });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [user]);
 
   async function loadContacts() {
@@ -48,6 +115,8 @@ export default function MessagesPage({ user }) {
       return;
     }
 
+    const lastReadMap = getLastReadMap();
+
     const withLastMessage = await Promise.all(
       (connections || []).map(async (c) => {
         const { data: lastMsg } = await supabase
@@ -60,11 +129,20 @@ export default function MessagesPage({ user }) {
           .limit(1)
           .maybeSingle();
 
+        const lastRead = lastReadMap[c.id] || "1970-01-01T00:00:00.000Z";
+        const { count: unreadCount } = await supabase
+          .from("messages")
+          .select("id", { count: "exact", head: true })
+          .eq("sender_id", c.id)
+          .eq("receiver_id", user.id)
+          .gt("created_at", lastRead);
+
         return {
           ...c,
           lastMessage: lastMsg?.content || null,
           lastMessageAt: lastMsg?.created_at || null,
           lastMessageMine: lastMsg?.sender_id === user.id,
+          unreadCount: unreadCount || 0,
         };
       })
     );
@@ -78,6 +156,14 @@ export default function MessagesPage({ user }) {
 
     setContacts(withLastMessage);
     setLoading(false);
+  }
+
+  function handleSelectContact(c) {
+    setActiveContact(c);
+    setLastRead(c.id);
+    setContacts((prev) =>
+      prev.map((p) => (p.id === c.id ? { ...p, unreadCount: 0 } : p))
+    );
   }
 
   if (loading) {
@@ -104,8 +190,10 @@ export default function MessagesPage({ user }) {
                 <button
                   className={`contact-item ${
                     activeContact?.id === c.id ? "active" : ""
-                  } ${c.lastMessage ? "has-chatted" : ""}`}
-                  onClick={() => setActiveContact(c)}
+                  } ${c.lastMessage ? "has-chatted" : ""} ${
+                    c.unreadCount > 0 ? "has-unread" : ""
+                  }`}
+                  onClick={() => handleSelectContact(c)}
                 >
                   <Avatar src={c.avatar_url} name={c.nickname} className="contact-avatar" />
                   <span className="contact-main">
@@ -120,12 +208,36 @@ export default function MessagesPage({ user }) {
                         </span>
                       )}
                     </span>
-                    <span className="contact-last-message">
-                      {c.lastMessage
-                        ? `${c.lastMessageMine ? "You: " : ""}${c.lastMessage}`
-                        : "No messages yet"}
+                    <span className="contact-bottom-row">
+                      <span className="contact-last-message">
+                        {c.lastMessage
+                          ? `${c.lastMessageMine ? "You: " : ""}${c.lastMessage}`
+                          : "No messages yet"}
+                      </span>
+                      {c.unreadCount > 0 && (
+                        <span
+                          className="unread-badge"
+                          aria-label={`${c.unreadCount} unread messages`}
+                        >
+                          {c.unreadCount > 9 ? "9+" : c.unreadCount}
+                        </span>
+                      )}
                     </span>
                   </span>
+                  {activeContact?.id === c.id && (
+                    <svg
+                      className="contact-active-arrow"
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2.5"
+                      aria-hidden="true"
+                    >
+                      <polyline points="9 6 15 12 9 18" />
+                    </svg>
+                  )}
                 </button>
               </li>
             ))}

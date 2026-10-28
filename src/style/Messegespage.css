@@ -310,3 +310,54 @@ img.contact-avatar {
     width: 100%;
   }
 }
+/* ---- Active state + unread badge additions ---- */
+
+.contact-item {
+  position: relative;
+  border-left: 3px solid transparent;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.contact-item.active {
+  background: linear-gradient(135deg, rgba(236, 72, 153, 0.14), rgba(168, 85, 247, 0.1));
+  border-left: 3px solid #ec4899;
+}
+
+.contact-active-arrow {
+  flex: none;
+  margin-left: 6px;
+  align-self: center;
+  color: #ec4899;
+}
+
+.contact-bottom-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.unread-badge {
+  flex: none;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #ec4899, #a855f7);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 10px rgba(236, 72, 153, 0.5);
+}
+
+.contact-item.has-unread .contact-nickname {
+  color: #fff;
+}
+
+.contact-item.has-unread .contact-last-message {
+  color: #e8e3f0;
+  font-weight: 500;
+}
