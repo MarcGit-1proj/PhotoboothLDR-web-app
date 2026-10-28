@@ -253,13 +253,41 @@ img.contact-avatar {
 }
 
 /* ---------- Loading state ---------- */
-.messages-loading {
-  display: flex;
+/* Overrides the row (sidebar + chat) layout so the spinner block
+   sits dead-center on the page instead of hugging the left edge. */
+.messages-page.messages-page-loading {
   align-items: center;
   justify-content: center;
-  height: 100vh;
+}
+
+.messages-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
   color: #a79fb3;
-  font-size: 16px;
+  font-size: 15px;
+}
+
+.messages-loading p {
+  margin: 0;
+}
+
+.loading-spinner {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 3px solid rgba(236, 72, 153, 0.15);
+  border-top-color: #ec4899;
+  border-right-color: #a855f7;
+  animation: loading-spin 0.8s linear infinite;
+}
+
+@keyframes loading-spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* ---------- Mobile: two-view navigation ---------- */

@@ -81,8 +81,11 @@ export default function MessagesPage({ user }) {
 
   if (loading) {
     return (
-      <div className="messages-page">
-        <p className="messages-loading">Loading messages...</p>
+      <div className="messages-page messages-page-loading">
+        <div className="messages-loading">
+          <span className="loading-spinner" aria-hidden="true" />
+          <p>Loading messages...</p>
+        </div>
       </div>
     );
   }

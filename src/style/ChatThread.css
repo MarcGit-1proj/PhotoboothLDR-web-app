@@ -16,9 +16,14 @@
   margin: 16px 20px 0;
   padding: 12px 20px;
   border-radius: 18px;
-  border: 1px solid rgba(236, 72, 153, 0.35);
-  background: linear-gradient(135deg, rgba(236, 72, 153, 0.1), rgba(168, 85, 247, 0.08)), #15121c;
-  box-shadow: 0 0 22px rgba(168, 85, 247, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: linear-gradient(135deg, rgba(236, 72, 153, 0.18), rgba(168, 85, 247, 0.12));
+  backdrop-filter: blur(18px) saturate(160%);
+  -webkit-backdrop-filter: blur(18px) saturate(160%);
+  box-shadow:
+    0 8px 28px rgba(0, 0, 0, 0.35),
+    0 0 22px rgba(168, 85, 247, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12);
 }
 
 .chat-header-info {
