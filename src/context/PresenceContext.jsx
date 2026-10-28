@@ -1,56 +1,33 @@
-import { createContext, useContext, useEffect, useState } from "react";
+import { useEffect } from "react";
 import { supabase } from "../supabaseClient";
 
-const PresenceContext = createContext(new Set());
+// How often the current user "checks in" by touching their own
+// profiles.last_seen. Must match (or be looser than) the staleness
+// threshold used in ChatThread's online check, or everyone will look
+// unavailable most of the time.
+const HEARTBEAT_INTERVAL_MS = 15000;
 
-// Any component can call this to get the live Set of user ids that are
-// currently online (have the app open and are logged in, anywhere —
-// Main page, Photobooth, Messages, etc).
-export function usePresence() {
-  return useContext(PresenceContext);
-}
-
-// Mount this once, near the top of the app, above the router. As long as
-// userId is set, the current user is tracked in a shared Supabase Realtime
-// presence channel for the entire time they're logged in — not just while
-// a specific page (like Messages) happens to be open. Closing the tab,
-// logging out, or losing connection drops them automatically; Supabase
-// handles that cleanup, nothing to do manually here.
+// Mount this once, above the router, in App.jsx. While userId is set,
+// it pings the touch_online_status() RPC every ~15s so the user's
+// last_seen stays fresh for as long as they're logged in and the tab
+// is open — on ANY page, not just Messages. Logging out (userId
+// becomes null) simply stops the heartbeat; after ~25s of silence
+// their last_seen goes stale and anyone viewing their chat sees them
+// flip to "Unavailable" on its own, no manual offline signal needed.
 export function PresenceProvider({ userId, children }) {
-  const [onlineIds, setOnlineIds] = useState(new Set());
-
   useEffect(() => {
-    if (!userId) {
-      setOnlineIds(new Set());
-      return;
+    if (!userId) return;
+
+    async function heartbeat() {
+      const { error } = await supabase.rpc("touch_online_status");
+      if (error) console.error("Online-status heartbeat failed:", error.message);
     }
 
-    const channel = supabase.channel("snapsync-presence", {
-      config: { presence: { key: userId } },
-    });
+    heartbeat();
+    const interval = setInterval(heartbeat, HEARTBEAT_INTERVAL_MS);
 
-    function syncOnlineIds() {
-      setOnlineIds(new Set(Object.keys(channel.presenceState())));
-    }
-
-    channel
-      .on("presence", { event: "sync" }, syncOnlineIds)
-      .on("presence", { event: "join" }, syncOnlineIds)
-      .on("presence", { event: "leave" }, syncOnlineIds)
-      .subscribe(async (status) => {
-        if (status === "SUBSCRIBED") {
-          await channel.track({ online_at: new Date().toISOString() });
-        }
-      });
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
+    return () => clearInterval(interval);
   }, [userId]);
 
-  return (
-    <PresenceContext.Provider value={onlineIds}>
-      {children}
-    </PresenceContext.Provider>
-  );
+  return children;
 }

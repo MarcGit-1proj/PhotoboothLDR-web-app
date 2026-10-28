@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../supabaseClient";
-import { usePresence } from "../context/PresenceContext";
 import ChatThread from "./ChatThread";
 import "../style/Messegespage.css";
 
@@ -31,11 +30,6 @@ export default function MessagesPage({ user }) {
   const [contacts, setContacts] = useState([]);
   const [activeContact, setActiveContact] = useState(null);
   const [loading, setLoading] = useState(true);
-
-  // Who's online comes from the shared, site-wide presence tracker
-  // mounted in App.jsx — it already reflects anyone logged in anywhere
-  // in the app, not just people who have this Messages page open.
-  const onlineIds = usePresence();
 
   useEffect(() => {
     if (user) loadContacts();
@@ -144,7 +138,6 @@ export default function MessagesPage({ user }) {
             user={user}
             contact={activeContact}
             onBack={() => setActiveContact(null)}
-            isOnline={onlineIds.has(activeContact.id)}
           />
         ) : (
           <div className="no-chat-selected">

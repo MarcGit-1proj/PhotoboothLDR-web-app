@@ -1,6 +1,4 @@
-/* Same palette as Messegespage.css — see that file for the full
-   comment. pink #ec4899, purple #a855f7, card #15121c, border
-   rgba(255,255,255,0.07), muted #9b95a6 */
+/* Same palette as Messagespage.css — pink #ec4899, purple #a855f7, card #15121c, border rgba(255,255,255,0.07), muted #9b95a6 */
 
 .chat-thread {
   display: flex;
@@ -45,8 +43,20 @@
   width: 8px;
   height: 8px;
   border-radius: 50%;
+  transition: background 0.3s ease, box-shadow 0.3s ease;
+}
+
+/* Kulay kapag Available / Online (Green) */
+.chat-status-dot.online {
   background: #22c55e;
   box-shadow: 0 0 6px rgba(34, 197, 94, 0.65);
+}
+
+/* Kulay kapag Unavailable / Offline (Purple) */
+.chat-status-dot.offline,
+.chat-status-dot.unavailable {
+  background: #a855f7;
+  box-shadow: 0 0 6px rgba(168, 85, 247, 0.65);
 }
 
 .chat-back-btn {
@@ -79,7 +89,6 @@
   box-shadow: 0 0 0 2px #0b0910, 0 0 0 4px rgba(236, 72, 153, 0.55);
 }
 
-/* <img> version of the header avatar (real profile photo) */
 img.chat-avatar {
   object-fit: cover;
 }
@@ -94,8 +103,6 @@ img.chat-avatar {
   max-width: 100%;
 }
 
-/* Centered, max-width message column so it doesn't stretch
-   edge-to-edge on wide desktop screens. */
 .chat-messages {
   flex: 1;
   overflow-y: auto;
@@ -113,10 +120,6 @@ img.chat-avatar {
   margin: auto;
 }
 
-/* One flat row per message: [avatar?] [bubble column] [status?].
-   margin-bottom is fixed and the SAME for every row — it never shrinks
-   or grows based on the neighboring message's height, so a tall 2-3
-   line bubble followed by a short "hi" never crowds or overlaps. */
 .chat-bubble-row {
   display: flex;
   align-items: flex-end;
@@ -140,7 +143,6 @@ img.chat-avatar {
   justify-content: flex-start;
 }
 
-/* Bubble + its own timestamp, stacked vertically under the bubble. */
 .bubble-col {
   display: flex;
   flex-direction: column;
@@ -156,8 +158,6 @@ img.chat-avatar {
   align-items: flex-start;
 }
 
-/* Reserved slot so grouped messages stay aligned even when the avatar
-   is only shown on the last bubble of the group. */
 .bubble-avatar-slot {
   flex: none;
   width: 22px;
@@ -303,7 +303,6 @@ span.bubble-avatar {
   clip: rect(0, 0, 0, 0);
 }
 
-/* ---------- Mobile ---------- */
 @media (max-width: 768px) {
   .chat-back-btn {
     display: flex;

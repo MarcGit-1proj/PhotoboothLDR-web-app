@@ -6,8 +6,46 @@ function initialOf(name) {
   return (name || "?").trim().charAt(0).toUpperCase();
 }
 
-// Shows the real profile photo when one exists; falls back to the
-// initial-letter circle if there's no avatar_url or the image fails to load.
+const ONLINE_THRESHOLD_MS = 25000;
+
+function isFresh(lastSeen) {
+  return !!lastSeen && Date.now() - new Date(lastSeen).getTime() < ONLINE_THRESHOLD_MS;
+}
+
+function useOnlineStatus(contactId, initialLastSeen) {
+  const [lastSeen, setLastSeen] = useState(initialLastSeen || null);
+  const [isOnline, setIsOnline] = useState(isFresh(initialLastSeen));
+
+  useEffect(() => {
+    setLastSeen(initialLastSeen || null);
+  }, [contactId, initialLastSeen]);
+
+  useEffect(() => {
+    if (!contactId) return;
+
+    const channel = supabase
+      .channel(`online-status-${contactId}`)
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "profiles", filter: `id=eq.${contactId}` },
+        (payload) => setLastSeen(payload.new.last_seen)
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [contactId]);
+
+  useEffect(() => {
+    setIsOnline(isFresh(lastSeen));
+    const interval = setInterval(() => setIsOnline(isFresh(lastSeen)), 5000);
+    return () => clearInterval(interval);
+  }, [lastSeen]);
+
+  return isOnline;
+}
+
 function Avatar({ src, name, className }) {
   const [broken, setBroken] = useState(false);
 
@@ -25,9 +63,6 @@ function Avatar({ src, name, className }) {
   return <span className={className}>{initialOf(name)}</span>;
 }
 
-// sending = optimistic, just fired, waiting for the DB insert to confirm
-// sent    = confirmed, saved in the messages table
-// failed  = insert errored out
 function StatusIcon({ status }) {
   const gradientId = useId();
 
@@ -48,7 +83,6 @@ function StatusIcon({ status }) {
       </svg>
     );
   }
-  // sent — WhatsApp-style double checkmark, in the pink -> purple gradient
   return (
     <svg
       className="status-icon sent"
@@ -73,6 +107,7 @@ function StatusIcon({ status }) {
 }
 
 export default function ChatThread({ user, contact, onBack }) {
+  const isOnline = useOnlineStatus(contact.id, contact.last_seen);
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState("");
   const [loading, setLoading] = useState(true);
@@ -106,7 +141,6 @@ export default function ChatThread({ user, contact, onBack }) {
     if (error) {
       console.error("Failed to load messages:", error.message);
     } else {
-      // Anything already persisted in the DB counts as "sent".
       setMessages((data || []).map((m) => ({ ...m, status: "sent" })));
     }
 
@@ -127,8 +161,6 @@ export default function ChatThread({ user, contact, onBack }) {
 
           if (isRelevant) {
             setMessages((prev) => {
-              // Avoid duplicating a message we already added optimistically
-              // (matched by real id) when our own insert echoes back.
               if (prev.some((m) => m.id === msg.id)) return prev;
               return [...prev, { ...msg, status: "sent" }];
             });
@@ -181,8 +213,6 @@ export default function ChatThread({ user, contact, onBack }) {
     );
   }
 
-  // Groups consecutive bubbles from the same sender so we don't repeat
-  // the timestamp (and the avatar) on every single message.
   function shouldShowTimestamp(index) {
     const next = messages[index + 1];
     if (!next) return true;
@@ -207,8 +237,8 @@ export default function ChatThread({ user, contact, onBack }) {
         <div className="chat-header-info">
           <span className="chat-contact-name">{contact.nickname}</span>
           <span className="chat-status">
-            <span className="chat-status-dot" />
-            Available
+            <span className={`chat-status-dot ${isOnline ? "online" : "offline"}`} />
+            {isOnline ? "Available" : "Unavailable"}
           </span>
         </div>
       </div>
@@ -222,11 +252,6 @@ export default function ChatThread({ user, contact, onBack }) {
             const showAvatar = !isMine && shouldShowTimestamp(i);
             const showTimestamp = shouldShowTimestamp(i);
 
-            // One flat row per message: [avatar?] [bubble + its own
-            // timestamp, stacked] [status?]. Every row gets the same,
-            // fixed margin-bottom below — spacing never depends on
-            // whether a neighboring bubble is one line or three, so
-            // short and tall messages never crowd or overlap each other.
             return (
               <div
                 key={msg.id}
