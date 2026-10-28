@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { supabase } from './supabaseClient';
+import { PresenceProvider } from './context/PresenceContext';
 import LoginPage from './components/login-page';
 import Frontpage from './components/Frontpage';
 import MainPage from './components/Main-page';
@@ -89,70 +90,75 @@ export default function App() {
   }
 
   return (
-    <Router>
-      <Routes>
-      
-        <Route
-          path="/"
-          element={
-            isLoggedIn ? (
-              <Navigate to="/welcome" replace />
-            ) : (
-              <LoginPage onContinueAsGuest={handleGuest} />
-            )
-          }
-        />
+    // PresenceProvider sits above the router so "online" tracking covers
+    // the whole site for as long as a real (non-guest) user is logged
+    // in — not just while the Messages page happens to be mounted.
+    <PresenceProvider userId={isRealUser ? user.id : null}>
+      <Router>
+        <Routes>
 
-        <Route
-          path="/welcome"
-          element={<ProtectedRoute allowed={isLoggedIn}><Frontpage /></ProtectedRoute>}
-        />
+          <Route
+            path="/"
+            element={
+              isLoggedIn ? (
+                <Navigate to="/welcome" replace />
+              ) : (
+                <LoginPage onContinueAsGuest={handleGuest} />
+              )
+            }
+          />
 
-        <Route
-          path="/main"
-          element={
-            <ProtectedRoute allowed={isLoggedIn}>
-              <MainPage user={isRealUser ? user : null} onLogout={handleLogout} />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/live-call"
-          element={<ProtectedRoute allowed={isLoggedIn}><LiveCall /></ProtectedRoute>}
-        />
-        <Route
-          path="/messages"
-          element={
-            <ProtectedRoute allowed={isLoggedIn}>
-              <MessagesPage user={isRealUser ? user : null} />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/photobooth"
-          element={<ProtectedRoute allowed={isLoggedIn}><PhotoboothPage /></ProtectedRoute>}
-        />
-        <Route
-          path="/photobooth/solo"
-          element={<ProtectedRoute allowed={isLoggedIn}><PhotoboothSoloPage /></ProtectedRoute>}
-        />
-        <Route
-          path="/photobooth/duo"
-          element={<ProtectedRoute allowed={isLoggedIn}><PhotoboothDuo /></ProtectedRoute>}
-        />
-        <Route
-          path="/profile"
-          element={<ProtectedRoute allowed={isLoggedIn}><UserProfilePage /></ProtectedRoute>}
-        />
-      </Routes>
+          <Route
+            path="/welcome"
+            element={<ProtectedRoute allowed={isLoggedIn}><Frontpage /></ProtectedRoute>}
+          />
 
-      {needsNickname && (
-        <NicknameModal
-          user={user}
-          onDone={handleNicknameDone}
-          onSkip={handleNicknameSkip}
-        />
-      )}
-    </Router>
+          <Route
+            path="/main"
+            element={
+              <ProtectedRoute allowed={isLoggedIn}>
+                <MainPage user={isRealUser ? user : null} onLogout={handleLogout} />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/live-call"
+            element={<ProtectedRoute allowed={isLoggedIn}><LiveCall /></ProtectedRoute>}
+          />
+          <Route
+            path="/messages"
+            element={
+              <ProtectedRoute allowed={isLoggedIn}>
+                <MessagesPage user={isRealUser ? user : null} />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/photobooth"
+            element={<ProtectedRoute allowed={isLoggedIn}><PhotoboothPage /></ProtectedRoute>}
+          />
+          <Route
+            path="/photobooth/solo"
+            element={<ProtectedRoute allowed={isLoggedIn}><PhotoboothSoloPage /></ProtectedRoute>}
+          />
+          <Route
+            path="/photobooth/duo"
+            element={<ProtectedRoute allowed={isLoggedIn}><PhotoboothDuo /></ProtectedRoute>}
+          />
+          <Route
+            path="/profile"
+            element={<ProtectedRoute allowed={isLoggedIn}><UserProfilePage /></ProtectedRoute>}
+          />
+        </Routes>
+
+        {needsNickname && (
+          <NicknameModal
+            user={user}
+            onDone={handleNicknameDone}
+            onSkip={handleNicknameSkip}
+          />
+        )}
+      </Router>
+    </PresenceProvider>
   );
 }
