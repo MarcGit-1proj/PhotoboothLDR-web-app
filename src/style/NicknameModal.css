@@ -1,0 +1,202 @@
+/* Nickname popup (lalabas pagkatapos mag-login) */
+.ss-nick-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(5px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  padding: 20px;
+  animation: ssNickFadeIn 0.2s ease forwards;
+}
+
+.ss-nick-card {
+  background: #18181b;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  padding: 32px;
+  width: 100%;
+  max-width: 420px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  color: #f4f4f5;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+  animation: ssNickScaleUp 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.ss-nick-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 60px;
+  height: 60px;
+  margin-bottom: 16px;
+  background: rgba(255, 77, 77, 0.1);
+  border-radius: 50%;
+}
+
+.ss-nick-card h2 {
+  font-size: 1.4rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  margin: 0 0 10px 0;
+  color: #f4f4f5;
+}
+
+.ss-nick-text {
+  font-size: 0.95rem;
+  line-height: 1.5;
+  color: #a1a1aa;
+  margin: 0 0 20px 0;
+}
+
+.ss-nick-field {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+  text-align: left;
+  margin-bottom: 22px;
+}
+
+.ss-nick-field label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #c4b5fd;
+}
+
+.ss-nick-field input {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  padding: 12px 54px 12px 14px;
+  font-size: 0.95rem;
+  font-family: inherit;
+  color: #f4f4f5;
+  width: 100%;
+  box-sizing: border-box;
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.ss-nick-field input:focus {
+  border-color: #ec4899;
+  box-shadow: 0 0 0 3px rgba(236, 72, 153, 0.2);
+}
+
+.ss-nick-field input[aria-invalid="true"] {
+  border-color: #ff4d4d;
+}
+
+.ss-nick-count {
+  position: absolute;
+  right: 12px;
+  top: 33px;
+  font-size: 0.7rem;
+  color: #71717a;
+  pointer-events: none;
+}
+
+.ss-nick-error {
+  margin: 0;
+  font-size: 0.8rem;
+  color: #ff6b6b;
+}
+
+.ss-nick-actions {
+  display: flex;
+  gap: 10px;
+  width: 100%;
+}
+
+.ss-nick-primary,
+.ss-nick-secondary {
+  border-radius: 10px;
+  padding: 12px 20px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.15s ease, opacity 0.2s ease;
+}
+
+.ss-nick-primary {
+  flex: 1;
+  background: #ff4d4d;
+  color: #ffffff;
+  border: none;
+}
+
+.ss-nick-primary:hover:not(:disabled) {
+  background: #e03e3e;
+  transform: translateY(-2px);
+}
+
+.ss-nick-secondary {
+  background: rgba(255, 255, 255, 0.06);
+  color: #d4d4d8;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.ss-nick-secondary:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.12);
+  transform: translateY(-2px);
+}
+
+.ss-nick-primary:disabled,
+.ss-nick-secondary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+@keyframes ssNickFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes ssNickScaleUp {
+  from { opacity: 0; transform: scale(0.95) translateY(10px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+/* Light mode */
+body.light-mode .ss-nick-card {
+  background: #ffffff;
+  border-color: rgba(0, 0, 0, 0.08);
+  color: #18181b;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15);
+}
+
+body.light-mode .ss-nick-card h2 {
+  color: #18181b;
+}
+
+body.light-mode .ss-nick-text {
+  color: #52525b;
+}
+
+body.light-mode .ss-nick-field label {
+  color: #7c3aed;
+}
+
+body.light-mode .ss-nick-field input {
+  background: rgba(0, 0, 0, 0.03);
+  border-color: rgba(0, 0, 0, 0.12);
+  color: #18181b;
+}
+
+body.light-mode .ss-nick-secondary {
+  background: rgba(0, 0, 0, 0.05);
+  border-color: rgba(0, 0, 0, 0.1);
+  color: #3f3f46;
+}
+
+body.light-mode .ss-nick-secondary:hover:not(:disabled) {
+  background: rgba(0, 0, 0, 0.1);
+}

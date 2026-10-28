@@ -1,0 +1,337 @@
+/* Import modern font mula sa Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* Wrapper na may glowing background (Original Red/Dark Theme) */
+.frontpage-wrapper {
+  font-family: 'Poppins', sans-serif;
+  background-color: #0d0d0f;
+  background-image: 
+    radial-gradient(circle at 20% 30%, rgba(225, 29, 72, 0.15) 0%, transparent 40%),
+    radial-gradient(circle at 80% 70%, rgba(147, 51, 234, 0.1) 0%, transparent 40%);
+  color: #e2e8f0;
+  min-height: 100vh;
+  width: 100vw;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 20px 0;
+  transition: opacity 0.6s ease-in-out, transform 0.6s ease-in-out;
+  opacity: 1;
+  transform: scale(1);
+}
+
+.frontpage-wrapper.page-leave {
+  opacity: 0;
+  transform: scale(1.02);
+}
+
+/* Glassmorphism Card Container na may Smooth Violet Glow Edge */
+.frontpage-content {
+  background: rgba(20, 20, 24, 0.45);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(192, 132, 252, 0.25);
+  padding: 45px 50px;
+  border-radius: 24px;
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.7), 0 0 30px rgba(192, 132, 252, 0.12);
+  max-width: 520px;
+  width: 90%;
+  text-align: center;
+}
+
+/* Badge */
+.frontpage-badge {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: nowrap;
+  gap: 2px;
+  background-color: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+  padding: 8px 18px;
+  border-radius: 50px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  margin-bottom: 16px;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  white-space: nowrap;
+}
+
+/* Loading Dots Animation para sa Badge */
+.dot-animation {
+  display: inline-flex;
+  margin-left: 2px;
+}
+
+.dot-animation span {
+  display: inline-block;
+  opacity: 0;
+  animation: dotBlink 1.4s infinite ease-in-out both;
+}
+
+.dot-animation span:nth-child(1) {
+  animation-delay: 0.2s;
+}
+
+.dot-animation span:nth-child(2) {
+  animation-delay: 0.4s;
+}
+
+.dot-animation span:nth-child(3) {
+  animation-delay: 0.6s;
+}
+
+@keyframes dotBlink {
+  0% {
+    opacity: 0;
+    transform: translateY(0);
+  }
+  50% {
+    opacity: 1;
+    transform: translateY(-2px);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(0);
+  }
+}
+
+/* Welcome Text */
+.welcome-text {
+  font-size: 0.95rem;
+  color: #9ca3af;
+  margin-bottom: 4px;
+}
+
+/* Main Title */
+.frontpage-title {
+  font-size: 2.4rem;
+  font-weight: 700;
+  color: #ffffff;
+  margin-bottom: 8px;
+  letter-spacing: -0.5px;
+}
+
+/* Purple Mix Gradient Color for Sync */
+.title-sync {
+  background: linear-gradient(135deg, #c084fc, #ec4899);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
+
+/* Glowing Quotes Container */
+.quotes-box {
+  padding: 15px 20px;
+  margin-bottom: 30px;
+  min-height: 80px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+}
+
+/* Quote Text Style */
+.quote-text {
+  font-size: 1rem;
+  color: #f3f4f6;
+  font-style: italic;
+  font-weight: 400;
+  line-height: 1.5;
+  transition: opacity 0.5s ease-in-out;
+  text-align: center;
+  text-shadow: 0 0 12px rgba(192, 132, 252, 0.4), 0 0 25px rgba(236, 72, 153, 0.25);
+}
+
+/* Fade In / Fade Out Classes */
+.fade-in {
+  opacity: 1;
+}
+
+.fade-out {
+  opacity: 0;
+}
+
+/* Call to Action Button */
+.btn-start-app {
+  display: block;
+  width: 100%;
+  background-color: #ef4444;
+  color: white;
+  border: none;
+  padding: 14px 24px;
+  font-size: 1rem;
+  font-weight: 600;
+  border-radius: 12px;
+  cursor: pointer;
+  box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4);
+  animation: slowPulse 2.5s infinite ease-in-out;
+  transition: background-color 0.2s ease, transform 0.2s ease;
+}
+
+@keyframes slowPulse {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4);
+  }
+  50% {
+    transform: scale(1.03);
+    box-shadow: 0 6px 25px rgba(239, 68, 68, 0.6);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4);
+  }
+}
+
+.btn-start-app:hover {
+  background-color: #dc2626;
+  animation-play-state: paused;
+  transform: scale(1.04);
+  box-shadow: 0 8px 25px rgba(239, 68, 68, 0.7);
+}
+
+.btn-start-app:active {
+  transform: scale(0.98);
+}
+
+/* Modal Overlay */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(8px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  animation: fadeInModal 0.3s ease-in-out;
+}
+
+/* Modal Box */
+.modal-content {
+  background: rgba(24, 24, 27, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  padding: 35px 30px;
+  border-radius: 20px;
+  max-width: 400px;
+  width: 90%;
+  text-align: center;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+}
+
+.modal-notification-badge {
+  display: inline-block;
+  background-color: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+  padding: 4px 12px;
+  border-radius: 50px;
+  font-size: 0.8rem;
+  margin-bottom: 12px;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.modal-content h2 {
+  font-size: 1.5rem;
+  color: #ffffff;
+  margin-bottom: 10px;
+}
+
+.modal-content p {
+  font-size: 0.9rem;
+  color: #9ca3af;
+  margin-bottom: 24px;
+  line-height: 1.5;
+}
+
+/* Modal Buttons */
+.modal-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.btn-allow {
+  background-color: #ef4444;
+  color: white;
+  border: none;
+  padding: 12px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.btn-allow:hover {
+  background-color: #dc2626;
+}
+
+.btn-cancel {
+  background: transparent;
+  color: #9ca3af;
+  border: none;
+  padding: 10px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.btn-cancel:hover {
+  color: #ffffff;
+}
+
+@keyframes fadeInModal {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+/* Landscape / maliit na height na screens */
+@media (max-height: 500px) and (orientation: landscape) {
+  .frontpage-content {
+    padding: 20px 30px;
+  }
+
+  .frontpage-badge {
+    margin-bottom: 8px;
+    font-size: 0.8rem;
+    padding: 6px 14px;
+  }
+
+  .welcome-text {
+    margin-bottom: 2px;
+    font-size: 0.8rem;
+  }
+
+  .frontpage-title {
+    font-size: 1.6rem;
+    margin-bottom: 4px;
+  }
+
+  .quotes-box {
+    min-height: 50px;
+    padding: 8px 10px;
+    margin-bottom: 14px;
+  }
+
+  .quote-text {
+    font-size: 0.85rem;
+  }
+
+  .btn-start-app {
+    padding: 10px 20px;
+    font-size: 0.9rem;
+  }
+}
