@@ -71,38 +71,47 @@ img.chat-avatar {
   margin: auto;
 }
 
+/* One flat row per message: [avatar?] [bubble column] [status?].
+   margin-bottom is fixed and the SAME for every row — it never shrinks
+   or grows based on the neighboring message's height, so a tall 2-3
+   line bubble followed by a short "hi" never crowds or overlaps. */
 .chat-bubble-row {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  max-width: 640px;
-  width: 100%;
-  margin: 0 auto 4px;
-}
-
-.chat-bubble-row.sent {
-  align-items: flex-end;
-}
-
-.chat-bubble-row.received {
-  align-items: flex-start;
-}
-
-/* Horizontal line that holds [avatar | bubble | status] so the pfp and
-   the sending/sent check can sit right beside the message. */
-.chat-bubble-line {
   display: flex;
   align-items: flex-end;
   gap: 8px;
-  max-width: 100%;
+  max-width: 640px;
+  width: 100%;
+  box-sizing: border-box;
+  margin: 0 auto;
+  margin-bottom: 14px;
 }
 
-.chat-bubble-row.received .chat-bubble-line {
+.chat-bubble-row:last-child {
+  margin-bottom: 0;
+}
+
+.chat-bubble-row.sent {
+  justify-content: flex-end;
+}
+
+.chat-bubble-row.received {
   justify-content: flex-start;
 }
 
-.chat-bubble-row.sent .chat-bubble-line {
-  justify-content: flex-end;
+/* Bubble + its own timestamp, stacked vertically under the bubble. */
+.bubble-col {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  max-width: 72%;
+}
+
+.chat-bubble-row.sent .bubble-col {
+  align-items: flex-end;
+}
+
+.chat-bubble-row.received .bubble-col {
+  align-items: flex-start;
 }
 
 /* Reserved slot so grouped messages stay aligned even when the avatar
@@ -163,10 +172,13 @@ span.bubble-avatar {
 }
 
 .chat-bubble {
-  max-width: 65%;
+  max-width: 100%;
+  width: fit-content;
   padding: 10px 14px;
   font-size: 14px;
   line-height: 1.45;
+  word-break: break-word;
+  box-sizing: border-box;
 }
 
 .chat-bubble-row.received .chat-bubble {
@@ -184,7 +196,7 @@ span.bubble-avatar {
 .chat-timestamp {
   font-size: 11px;
   color: #6b6b70;
-  margin: 2px 4px 10px;
+  margin: 4px 4px 0;
 }
 
 .chat-input-area {
@@ -250,9 +262,10 @@ span.bubble-avatar {
 
   .chat-bubble-row {
     max-width: 100%;
+    margin-bottom: 12px;
   }
 
-  .chat-bubble {
+  .bubble-col {
     max-width: 78%;
   }
 
