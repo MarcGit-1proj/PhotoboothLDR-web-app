@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../supabaseClient";
 import ChatThread from "./ChatThread";
+import EmptyChatState from "./EmptyChatState";
 import "../style/Messegespage.css";
 
 function initialOf(name) {
@@ -140,9 +141,7 @@ export default function MessagesPage({ user }) {
             onBack={() => setActiveContact(null)}
           />
         ) : (
-          <div className="no-chat-selected">
-            <p>Select a conversation to start chatting.</p>
-          </div>
+          <EmptyChatState />
         )}
       </section>
     </div>
