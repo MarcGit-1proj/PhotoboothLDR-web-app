@@ -1,4 +1,4 @@
-📸 SnapSync — Virtual Photobooth & Connectivity for LDR Couples
+SnapSync — Virtual Photobooth & Connectivity for LDR Couples
 
 <div align="center">
 
