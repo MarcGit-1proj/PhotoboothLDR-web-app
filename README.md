@@ -77,3 +77,4 @@ cd photoboothLDR
 
 
 **3. Install dependencies
+enjoyy 
