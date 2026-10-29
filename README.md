@@ -76,3 +76,5 @@ cd photoboothLDR
 
 
 **3. Install dependencies
+
+And enjoy!
