@@ -1958,3 +1958,38 @@ body.light-mode .profile-stalk-private-note {
     transform: translateY(-50%);
   }
 }
+.blocked-users-list {
+  list-style: none;
+  margin: 0 0 8px;
+  padding: 0;
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.blocked-user-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 4px;
+}
+
+.blocked-user-unblock-btn {
+  flex: none;
+  padding: 6px 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(232, 95, 174, 0.4);
+  background: transparent;
+  color: #e85fae;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.blocked-user-unblock-btn:hover {
+  background: rgba(232, 95, 174, 0.1);
+}
+
+.blocked-user-unblock-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

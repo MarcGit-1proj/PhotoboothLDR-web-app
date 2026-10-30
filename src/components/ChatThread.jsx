@@ -114,6 +114,8 @@ export default function ChatThread({ user, contact, onBack, onDisconnect }) {
   const [newMessage, setNewMessage] = useState("");
   const [loading, setLoading] = useState(true);
   const [showProfile, setShowProfile] = useState(false);
+  const [showDisconnectConfirm, setShowDisconnectConfirm] = useState(false);
+  const [disconnectBusy, setDisconnectBusy] = useState(false);
   const bottomRef = useRef(null);
 
   useEffect(() => {
@@ -270,21 +272,34 @@ export default function ChatThread({ user, contact, onBack, onDisconnect }) {
     // functional and I'll write the SQL + the toggle logic.
     console.log("Mute Notifications tapped for", contact.id);
   }
+  async function handleBlock() {
+    const ok = window.confirm(`Block ${contact.nickname}? You'll be disconnected and they won't be able to find or message you.`);
+    if (!ok) return;
 
-  function handleBlock() {
-    // TODO: no "blocked_users" table yet — tell me if you want this
-    // functional and I'll write the SQL + the toggle logic.
-    console.log("Block tapped for", contact.id);
+    const { error } = await supabase.rpc("block_user", { p_target_id: contact.id });
+    if (error) {
+      console.error("Failed to block:", error.message);
+      return;
+    }
+
+    setShowProfile(false);
+    if (onDisconnect) onDisconnect(contact);
+    if (onBack) onBack();
   }
 
-  async function handleDisconnect() {
-    const ok = window.confirm(`Disconnect from ${contact.nickname}?`);
-    if (!ok) return;
+  function handleDisconnectRequest() {
+    setShowDisconnectConfirm(true);
+  }
+
+  async function confirmDisconnect() {
+    setDisconnectBusy(true);
 
     if (onDisconnect) {
       // Let the parent (e.g. Messegespage.jsx) handle it if it already has
       // a remove-connection implementation wired to your connections list.
       onDisconnect(contact);
+      setDisconnectBusy(false);
+      setShowDisconnectConfirm(false);
       setShowProfile(false);
       return;
     }
@@ -295,11 +310,14 @@ export default function ChatThread({ user, contact, onBack, onDisconnect }) {
       p_other_user_id: contact.id,
     });
 
+    setDisconnectBusy(false);
+
     if (error) {
       console.error("Failed to disconnect:", error.message);
       return;
     }
 
+    setShowDisconnectConfirm(false);
     setShowProfile(false);
     if (onBack) onBack();
   }
@@ -419,9 +437,48 @@ export default function ChatThread({ user, contact, onBack, onDisconnect }) {
       <ViewProfileModal
         open={showProfile}
         onClose={() => setShowProfile(false)}
-        onDisconnect={handleDisconnect}
+        onDisconnect={handleDisconnectRequest}
         profile={profileData}
       />
+
+      {showDisconnectConfirm && (
+        <div
+          className="disconnect-confirm-overlay"
+          onClick={() => !disconnectBusy && setShowDisconnectConfirm(false)}
+        >
+          <div className="disconnect-confirm-card" onClick={(e) => e.stopPropagation()}>
+            <div className="disconnect-confirm-icon">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <circle cx="12" cy="12" r="9" stroke="#ff5c9a" strokeWidth="1.6" />
+                <line x1="5.5" y1="18.5" x2="18.5" y2="5.5" stroke="#ff5c9a" strokeWidth="1.6" />
+              </svg>
+            </div>
+            <h3 className="disconnect-confirm-title">Disconnect from {contact.nickname}?</h3>
+            <p className="disconnect-confirm-text">
+              You'll be removed from each other's connections, and this conversation
+              will disappear from your Messages.
+            </p>
+            <div className="disconnect-confirm-actions">
+              <button
+                type="button"
+                className="disconnect-confirm-btn cancel"
+                onClick={() => setShowDisconnectConfirm(false)}
+                disabled={disconnectBusy}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="disconnect-confirm-btn confirm"
+                onClick={confirmDisconnect}
+                disabled={disconnectBusy}
+              >
+                {disconnectBusy ? "Disconnecting..." : "Disconnect"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

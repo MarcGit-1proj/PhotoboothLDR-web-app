@@ -327,6 +327,11 @@ export default function UsersProfilePage() {
   // "Stalk" / Explore: minimalistang profile view ng isang connection
   const [stalkTarget, setStalkTarget] = useState(null);
 
+  // Blocked Users (ipinapakita sa Settings, may Unblock button)
+  const [blockedUsers, setBlockedUsers] = useState([]);
+  const [blockedLoading, setBlockedLoading] = useState(false);
+  const [unblockBusyId, setUnblockBusyId] = useState('');
+
   // Ilapat ang saved theme (kung direkta ang bukas sa /profile)
   useEffect(() => {
     const savedTheme = localStorage.getItem('snapsync_theme');
@@ -464,6 +469,41 @@ export default function UsersProfilePage() {
   useEffect(() => {
     if (isAccount) loadConnections();
   }, [isAccount, loadConnections]);
+
+  // Kunin ang listahan ng mga na-block na users
+  const loadBlockedUsers = useCallback(async () => {
+    if (!user) return;
+    setBlockedLoading(true);
+    try {
+      const { data, error: blockErr } = await supabase.rpc('list_my_blocked_users');
+      if (blockErr) throw blockErr;
+      setBlockedUsers(data || []);
+    } catch {
+      /* tahimik na mag-fail, hindi kritikal sa page */
+    } finally {
+      setBlockedLoading(false);
+    }
+  }, [user]);
+
+  useEffect(() => {
+    if (isAccount) loadBlockedUsers();
+  }, [isAccount, loadBlockedUsers]);
+
+  const handleUnblock = async (b) => {
+    setUnblockBusyId(b.id);
+    // Optimistic update
+    setBlockedUsers((prev) => prev.filter((x) => x.id !== b.id));
+
+    try {
+      const { error: unblockErr } = await supabase.rpc('unblock_user', { p_target_id: b.id });
+      if (unblockErr) throw unblockErr;
+    } catch (err) {
+      console.error('unblock_user failed:', err);
+      setBlockedUsers((prev) => (prev.some((x) => x.id === b.id) ? prev : [...prev, b]));
+    } finally {
+      setUnblockBusyId('');
+    }
+  };
 
   // Alisin ang isang connection (parang "unfriend"), tatanggalin din sa listahan
   const handleDisconnect = async (c) => {
@@ -781,6 +821,7 @@ export default function UsersProfilePage() {
       if (searchErr) throw searchErr;
       const match = Array.isArray(data) ? data[0] : data;
       if (!match) setSearchError('No account found with that code.');
+      else if (match.blocked_by_them) setSearchError('No account found with that code.');
       else setSearchResult(match);
     } catch (err) {
       setSearchError((err && err.message) || 'Could not search right now.');
@@ -808,7 +849,7 @@ export default function UsersProfilePage() {
         const { data, error: searchErr } = await supabase.rpc('search_user_by_code', { p_code: code });
         if (searchErr) throw searchErr;
         const match = Array.isArray(data) ? data[0] : data;
-        if (!match) {
+        if (!match || match.blocked_by_them) {
           setSearchError('No account found with that code.');
           return;
         }
@@ -822,6 +863,31 @@ export default function UsersProfilePage() {
       }
     }
 
+    // Huling pag-iingat: kung na-block pala kita at nasa state pa rin ang
+    // lumang resulta, huwag payagan ang pag-send ng request.
+    if (target.blocked_by_them) {
+      setSearchError('No account found with that code.');
+      setSearchResult(null);
+      return;
+    }
+
+    // Kung ikaw ang nag-block sa kanya, i-unblock muna sa halip na mag-connect.
+    if (target.blocked_by_me) {
+      setConnectBusy(true);
+      try {
+        const { error: unblockErr } = await supabase.rpc('unblock_user', { p_target_id: target.id });
+        if (unblockErr) throw unblockErr;
+        setConnectNotice('Unblocked. Search again to send a connection request.');
+        setSearchResult(null);
+        setSearchCode('');
+      } catch (err) {
+        setSearchError((err && err.message) || 'Could not unblock right now.');
+      } finally {
+        setConnectBusy(false);
+      }
+      return;
+    }
+
     setConnectBusy(true);
     try {
       const { error: connectErr } = await supabase.rpc('send_connection_request', {
@@ -832,7 +898,16 @@ export default function UsersProfilePage() {
       setSearchResult(null);
       setSearchCode('');
     } catch (err) {
-      setSearchError((err && err.message) || 'Could not send the request.');
+      // Huwag ipakita ang raw "User not found" galing sa block guard —
+      // gamitin ang parehong generic message gaya ng sa search, para
+      // hindi malaman ng humarang na siya pala ang na-block.
+      const msg = (err && err.message) || '';
+      if (msg.includes('User not found')) {
+        setSearchError('No account found with that code.');
+        setSearchResult(null);
+      } else {
+        setSearchError(msg || 'Could not send the request.');
+      }
     } finally {
       setConnectBusy(false);
     }
@@ -1045,13 +1120,22 @@ export default function UsersProfilePage() {
                   disabled={connectBusy}
                 >
                   <LinkIcon />
-                  <span>{connectBusy ? 'Sending...' : 'Connect'}</span>
+                  <span>
+                    {connectBusy
+                      ? (searchResult?.blocked_by_me ? 'Unblocking...' : 'Sending...')
+                      : (searchResult?.blocked_by_me ? 'Unblock' : 'Connect')}
+                  </span>
                 </button>
 
                 {(searchResult || searchError || connectNotice) && (
                   <div className="profile-search-popover">
                     {searching && <span className="profile-id-status">Searching...</span>}
-                    {searchResult && (
+                    {searchResult && searchResult.blocked_by_me && (
+                      <span className="profile-search-found">
+                        You blocked <strong>{searchResult.nickname || 'this user'}</strong> — click Unblock to allow connecting again.
+                      </span>
+                    )}
+                    {searchResult && !searchResult.blocked_by_me && (
                       <span className="profile-search-found">
                         Found <strong>{searchResult.nickname || 'user'}</strong> — click Connect to send a request.
                       </span>
@@ -1187,6 +1271,39 @@ export default function UsersProfilePage() {
                       <span className="slider"></span>
                     </label>
                   </div>
+
+                  <h4 className="settings-subtitle">Blocked users</h4>
+
+                  {blockedLoading ? (
+                    <p className="profile-hint">Loading...</p>
+                  ) : blockedUsers.length === 0 ? (
+                    <p className="profile-hint">You haven't blocked anyone.</p>
+                  ) : (
+                    <ul className="blocked-users-list">
+                      {blockedUsers.map((b) => (
+                        <li key={b.id} className="blocked-user-row">
+                          <span className="profile-notif-avatar">
+                            {b.avatar_url ? (
+                              <img src={b.avatar_url} alt="" className="profile-connections-avatar-img" />
+                            ) : (
+                              (b.nickname || '?').charAt(0).toUpperCase()
+                            )}
+                          </span>
+                          <span className="profile-notif-text">
+                            <span className="profile-notif-msg">{b.nickname || 'Unnamed user'}</span>
+                            <span className="profile-notif-time">{b.friend_code || 'Code hidden'}</span>
+                          </span>
+                          <button
+                            className="blocked-user-unblock-btn"
+                            onClick={() => handleUnblock(b)}
+                            disabled={unblockBusyId === b.id}
+                          >
+                            {unblockBusyId === b.id ? 'Unblocking...' : 'Unblock'}
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
 
                   <h4 className="settings-subtitle">Account actions</h4>
 
