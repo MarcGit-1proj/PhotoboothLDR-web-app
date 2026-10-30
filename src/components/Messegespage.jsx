@@ -103,6 +103,32 @@ export default function MessagesPage({ user }) {
     };
   }, [user]);
 
+  // Alisin ang isang contact sa sidebar list kapag na-disconnect (galing
+  // sa "Disconnect" sa ViewProfileModal via ChatThread), isara ang chat
+  // kung ito yung bukas, at tanggalin sa Supabase ang connection mismo.
+  async function handleDisconnectContact(contact) {
+    const wasActive = activeContactRef.current?.id === contact.id;
+
+    // Optimistic update: agad na alisin sa listahan at isara ang chat
+    // kung ito ang bukas, hindi na hinihintay ang response ng server.
+    setContacts((prev) => prev.filter((c) => c.id !== contact.id));
+    if (wasActive) setActiveContact(null);
+
+    const { error } = await supabase.rpc("remove_connection", {
+      p_other_user_id: contact.id,
+    });
+
+    if (error) {
+      console.error("Failed to disconnect:", error.message);
+      // Mag-fail man, ibalik sa listahan (hindi natin siya tinanggal sa
+      // database kung mag-eerror ang request).
+      setContacts((prev) =>
+        prev.some((c) => c.id === contact.id) ? prev : [...prev, contact]
+      );
+      if (wasActive) setActiveContact(contact);
+    }
+  }
+
   async function loadContacts() {
     setLoading(true);
 
@@ -251,6 +277,7 @@ export default function MessagesPage({ user }) {
             user={user}
             contact={activeContact}
             onBack={() => setActiveContact(null)}
+            onDisconnect={handleDisconnectContact}
           />
         ) : (
           <EmptyChatState />

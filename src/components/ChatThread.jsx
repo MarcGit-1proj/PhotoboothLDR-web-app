@@ -289,10 +289,10 @@ export default function ChatThread({ user, contact, onBack, onDisconnect }) {
       return;
     }
 
-    // Best-effort fallback — confirm this matches your "remove-connection"
-    // SQL function's actual name/params and adjust if needed.
+    // Fallback — matches your "remove_connection" SQL function's actual
+    // parameter name: p_other_user_id.
     const { error } = await supabase.rpc("remove_connection", {
-      target_id: contact.id,
+      p_other_user_id: contact.id,
     });
 
     if (error) {

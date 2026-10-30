@@ -36,6 +36,7 @@ export default function ChatCallMenu({
     function handleClickOutside(e) {
       if (wrapRef.current && !wrapRef.current.contains(e.target)) {
         setMenuOpen(false);
+        setToastOpen(false);
       }
     }
     document.addEventListener("mousedown", handleClickOutside);
@@ -50,7 +51,7 @@ export default function ChatCallMenu({
     // Dropdown stays open on purpose — the toast just appears beside it.
     setToastOpen(true);
     clearTimeout(toastTimer.current);
-    toastTimer.current = setTimeout(() => setToastOpen(false), 4000);
+    toastTimer.current = setTimeout(() => setToastOpen(false), 5000);
   }
 
   function runThenClose(fn) {

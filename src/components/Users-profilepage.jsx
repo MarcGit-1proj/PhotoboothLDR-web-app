@@ -501,6 +501,25 @@ export default function UsersProfilePage() {
     return () => supabase.removeChannel(channel);
   }, [isAccount, user, loadNotifications]);
 
+  // Live updates para sa connections (disconnect/accept mula sa ibang page, e.g. Messages)
+  useEffect(() => {
+    if (!isAccount || !user) return;
+    const channel = supabase
+      .channel(`connections-${user.id}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'connections' },
+        (payload) => {
+          const row = payload.new?.pair_a ? payload.new : payload.old;
+          if (row?.pair_a === user.id || row?.pair_b === user.id) {
+            loadConnections();
+          }
+        }
+      )
+      .subscribe();
+    return () => supabase.removeChannel(channel);
+  }, [isAccount, user, loadConnections]);
+
   const unreadCount = notifications.filter((n) => !n.is_read).length;
 
   const timeAgo = (iso) => {
