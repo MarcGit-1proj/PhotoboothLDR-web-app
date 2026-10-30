@@ -31,6 +31,12 @@
   min-width: 0;
 }
 
+/* Pushes the 3-dot menu button to the right edge of the header */
+.chat-header-menu {
+  margin-left: auto;
+  flex: none;
+}
+
 .chat-status {
   display: flex;
   align-items: center;

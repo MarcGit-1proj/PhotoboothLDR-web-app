@@ -1,0 +1,140 @@
+.vpm-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(5, 2, 8, 0.72);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  padding: 20px;
+}
+
+.vpm-card {
+  position: relative;
+  width: 100%;
+  max-width: 400px;
+  background: #16101a;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 24px;
+  padding: 36px 28px 28px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+}
+
+.vpm-close {
+  position: absolute;
+  top: 16px;
+  right: 18px;
+  background: none;
+  border: none;
+  color: #8a7a93;
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.vpm-close:hover {
+  color: #f2eef5;
+}
+
+.vpm-avatar-wrap {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 18px;
+}
+
+.vpm-avatar {
+  width: 110px;
+  height: 110px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid #e85fae;
+  box-shadow: 0 0 22px rgba(232, 95, 174, 0.55);
+}
+
+.vpm-avatar-fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #d6679a, #8a3fb0);
+  color: #fff;
+  font-size: 40px;
+  font-weight: 700;
+}
+
+.vpm-name {
+  margin: 0 0 22px;
+  text-align: center;
+  font-size: 22px;
+  font-weight: 800;
+  color: #f8f5fa;
+}
+
+.vpm-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 2px;
+}
+
+.vpm-row-block {
+  align-items: flex-start;
+}
+
+.vpm-label {
+  font-size: 13px;
+  font-weight: 700;
+  color: #c08fe0;
+  flex: 0 0 auto;
+}
+
+.vpm-value {
+  font-size: 14px;
+  color: #f2eef5;
+  text-align: right;
+}
+
+.vpm-value-wrap {
+  max-width: 260px;
+  text-align: right;
+  line-height: 1.5;
+}
+
+.vpm-private {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 22px 8px 10px;
+  text-align: center;
+}
+
+.vpm-private p {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #d8cfe0;
+  max-width: 280px;
+}
+
+.vpm-divider {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.vpm-disconnect {
+  width: 100%;
+  margin-top: 24px;
+  padding: 14px;
+  border-radius: 14px;
+  background: rgba(120, 20, 35, 0.35);
+  border: 1px solid rgba(255, 90, 110, 0.45);
+  color: #ff6b7a;
+  font-weight: 700;
+  font-size: 15px;
+  cursor: pointer;
+}
+
+.vpm-disconnect:hover {
+  background: rgba(120, 20, 35, 0.55);
+}
