@@ -1,5 +1,7 @@
 import { useEffect, useId, useRef, useState } from "react";
 import { supabase } from "../supabaseClient";
+import ChatCallMenu from "./ChatCallMenu";
+import ViewProfileModal from "./ViewProfileModal";
 import "../style/ChatThread.css";
 
 function initialOf(name) {
@@ -106,11 +108,12 @@ function StatusIcon({ status }) {
   );
 }
 
-export default function ChatThread({ user, contact, onBack }) {
+export default function ChatThread({ user, contact, onBack, onDisconnect }) {
   const isOnline = useOnlineStatus(contact.id, contact.last_seen);
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState("");
   const [loading, setLoading] = useState(true);
+  const [showProfile, setShowProfile] = useState(false);
   const bottomRef = useRef(null);
 
   useEffect(() => {
@@ -219,9 +222,103 @@ export default function ChatThread({ user, contact, onBack }) {
     return next.sender_id !== messages[index].sender_id;
   }
 
+  // --- 3-dot menu handlers -------------------------------------------
+
+  async function handleClearChat() {
+    const ok = window.confirm(`Clear all messages with ${contact.nickname}? This can't be undone.`);
+    if (!ok) return;
+
+    const { error } = await supabase
+      .from("messages")
+      .delete()
+      .or(
+        `and(sender_id.eq.${user.id},receiver_id.eq.${contact.id}),and(sender_id.eq.${contact.id},receiver_id.eq.${user.id})`
+      );
+
+    if (error) {
+      console.error("Failed to clear chat:", error.message);
+      // NOTE: if this fails, your "messages" table's RLS policies most
+      // likely don't have a DELETE rule yet — ask me to write one.
+      return;
+    }
+
+    setMessages([]);
+  }
+
+  async function handleDeleteChat() {
+    const ok = window.confirm(`Delete this conversation with ${contact.nickname}?`);
+    if (!ok) return;
+
+    const { error } = await supabase
+      .from("messages")
+      .delete()
+      .or(
+        `and(sender_id.eq.${user.id},receiver_id.eq.${contact.id}),and(sender_id.eq.${contact.id},receiver_id.eq.${user.id})`
+      );
+
+    if (error) {
+      console.error("Failed to delete chat:", error.message);
+      return;
+    }
+
+    setMessages([]);
+    if (onBack) onBack();
+  }
+
+  function handleMute() {
+    // TODO: no "muted" column/table wired yet — tell me if you want this
+    // functional and I'll write the SQL + the toggle logic.
+    console.log("Mute Notifications tapped for", contact.id);
+  }
+
+  function handleBlock() {
+    // TODO: no "blocked_users" table yet — tell me if you want this
+    // functional and I'll write the SQL + the toggle logic.
+    console.log("Block tapped for", contact.id);
+  }
+
+  async function handleDisconnect() {
+    const ok = window.confirm(`Disconnect from ${contact.nickname}?`);
+    if (!ok) return;
+
+    if (onDisconnect) {
+      // Let the parent (e.g. Messegespage.jsx) handle it if it already has
+      // a remove-connection implementation wired to your connections list.
+      onDisconnect(contact);
+      setShowProfile(false);
+      return;
+    }
+
+    // Best-effort fallback — confirm this matches your "remove-connection"
+    // SQL function's actual name/params and adjust if needed.
+    const { error } = await supabase.rpc("remove_connection", {
+      target_id: contact.id,
+    });
+
+    if (error) {
+      console.error("Failed to disconnect:", error.message);
+      return;
+    }
+
+    setShowProfile(false);
+    if (onBack) onBack();
+  }
+
   if (loading) {
     return <div className="chat-loading">Loading conversation...</div>;
   }
+
+  // Profile fields are read straight off `contact`. If your
+  // list-my-connections()/profiles data uses different column names
+  // for these, adjust the mapping below.
+  const profileData = {
+    name: contact.nickname,
+    avatarUrl: contact.avatar_url,
+    codeId: contact.code_id,
+    isPrivate: contact.is_private,
+    bio: contact.bio,
+    contact: contact.contact_info,
+  };
 
   return (
     <div className="chat-thread">
@@ -240,6 +337,16 @@ export default function ChatThread({ user, contact, onBack }) {
             <span className={`chat-status-dot ${isOnline ? "online" : "offline"}`} />
             {isOnline ? "Available" : "Unavailable"}
           </span>
+        </div>
+
+        <div className="chat-header-menu">
+          <ChatCallMenu
+            onViewProfile={() => setShowProfile(true)}
+            onMute={handleMute}
+            onBlock={handleBlock}
+            onClearChat={handleClearChat}
+            onDeleteChat={handleDeleteChat}
+          />
         </div>
       </div>
 
@@ -308,6 +415,13 @@ export default function ChatThread({ user, contact, onBack }) {
         />
         <button type="submit">Send</button>
       </form>
+
+      <ViewProfileModal
+        open={showProfile}
+        onClose={() => setShowProfile(false)}
+        onDisconnect={handleDisconnect}
+        profile={profileData}
+      />
     </div>
   );
 }
